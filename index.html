@@ -432,8 +432,8 @@
             right: 0;
             bottom: 0;
             overflow: hidden;
-            opacity: 0.9;
-            pointer-events: none;
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .pdf-editable-field {
@@ -782,10 +782,11 @@
                 downloadBtn.style.display = 'flex';
                 showAlert('HTML file loaded successfully', 'success');
             } else {
+                // For PDF, store as Uint8Array to prevent detachment
                 const arrayBuffer = await file.arrayBuffer();
-                // Clone the arrayBuffer to prevent detachment
-                state.originalContent = arrayBuffer.slice(0);
-                state.currentContent = arrayBuffer.slice(0);
+                const uint8Array = new Uint8Array(arrayBuffer);
+                state.originalContent = uint8Array;
+                state.currentContent = new Uint8Array(uint8Array);
                 addToHistory('Original PDF loaded');
                 await renderPDF();
                 viewTabs.style.display = 'none';
@@ -831,6 +832,24 @@
                 editorContent.innerHTML = '<div class="pdf-editor" id="pdfEditor"></div>';
                 const pdfEditor = document.getElementById('pdfEditor');
 
+                // Load the PDF with pdf-lib to get form fields
+                let pdfLibDoc;
+                try {
+                    pdfLibDoc = await PDFLib.PDFDocument.load(state.currentContent);
+                    const form = pdfLibDoc.getForm();
+                    const fields = form.getFields();
+                    
+                    // Store form fields info
+                    state.pdfFormFields = fields.map(field => ({
+                        name: field.getName(),
+                        type: field.constructor.name,
+                        value: field.constructor.name === 'PDFTextField' ? (field.getText() || '') : null
+                    }));
+                } catch (e) {
+                    console.log('No form fields found or error reading form:', e);
+                    state.pdfFormFields = [];
+                }
+
                 // Render all pages
                 for (let pageNum = 1; pageNum <= state.pdfDoc.numPages; pageNum++) {
                     const page = await state.pdfDoc.getPage(pageNum);
@@ -854,11 +873,86 @@
                         viewport: viewport
                     }).promise;
 
+                    // Extract text content for editing
+                    const textContent = await page.getTextContent();
+                    const textLayer = document.createElement('div');
+                    textLayer.className = 'pdf-text-layer';
+                    textLayer.style.cssText = `
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        overflow: hidden;
+                        opacity: 0;
+                        line-height: 1;
+                    `;
+
+                    // Render text items
+                    textContent.items.forEach((item, index) => {
+                        const textDiv = document.createElement('div');
+                        textDiv.style.cssText = `
+                            position: absolute;
+                            left: ${item.transform[4]}px;
+                            top: ${item.transform[5]}px;
+                            font-size: ${item.transform[0]}px;
+                            font-family: ${item.fontName};
+                            transform: scaleX(${item.transform[0] / item.transform[3]});
+                            white-space: pre;
+                            cursor: text;
+                            padding: 2px;
+                            background: rgba(99, 102, 241, 0.05);
+                            border: 1px solid transparent;
+                        `;
+                        textDiv.textContent = item.str;
+                        textDiv.dataset.pageNum = pageNum;
+                        textDiv.dataset.itemIndex = index;
+                        
+                        // Make text editable on click
+                        textDiv.addEventListener('click', function() {
+                            const currentText = this.textContent;
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = currentText;
+                            input.style.cssText = this.style.cssText + 'border: 2px solid var(--primary); background: white; z-index: 100;';
+                            
+                            input.addEventListener('blur', () => {
+                                textDiv.textContent = input.value;
+                                this.parentNode.replaceChild(textDiv, input);
+                            });
+                            
+                            input.addEventListener('keydown', (e) => {
+                                if (e.key === 'Enter') {
+                                    input.blur();
+                                }
+                            });
+                            
+                            this.parentNode.replaceChild(input, this);
+                            input.focus();
+                            input.select();
+                        });
+                        
+                        textLayer.appendChild(textDiv);
+                    });
+
+                    container.appendChild(textLayer);
+
                     // Add page number
                     const pageLabel = document.createElement('div');
                     pageLabel.style.cssText = 'text-align: center; color: var(--text-secondary); padding: 0.5rem; font-size: 0.875rem;';
                     pageLabel.textContent = `Page ${pageNum} of ${state.pdfDoc.numPages}`;
                     container.appendChild(pageLabel);
+                }
+
+                // Show form fields info if available
+                if (state.pdfFormFields && state.pdfFormFields.length > 0) {
+                    const fieldsInfo = document.createElement('div');
+                    fieldsInfo.style.cssText = 'background: var(--bg-secondary); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;';
+                    fieldsInfo.innerHTML = `
+                        <h3 style="margin-bottom: 0.5rem; color: var(--primary);">📝 Editable Form Fields Found: ${state.pdfFormFields.length}</h3>
+                        <p style="font-size: 0.875rem; color: var(--text-secondary);">Use Find & Replace to edit form field values, or click on text to edit directly.</p>
+                    `;
+                    pdfEditor.insertBefore(fieldsInfo, pdfEditor.firstChild);
                 }
 
             } catch (error) {
@@ -932,8 +1026,9 @@
             const caseSensitive = document.getElementById('caseSensitive').checked;
             
             try {
-                // Load a fresh copy from the current state
-                const pdfDoc = await PDFLib.PDFDocument.load(state.currentContent.slice(0));
+                // Create a new Uint8Array from current content to avoid detachment
+                const pdfData = new Uint8Array(state.currentContent);
+                const pdfDoc = await PDFLib.PDFDocument.load(pdfData);
                 const form = pdfDoc.getForm();
                 const fields = form.getFields();
                 let count = 0;
@@ -955,12 +1050,12 @@
                 });
 
                 if (count === 0) {
-                    showAlert('No editable fields found with that text', 'info');
+                    showAlert('No editable fields found with that text. Note: Find & Replace only works with PDF form fields, not embedded text.', 'info');
                     return;
                 }
 
                 const pdfBytes = await pdfDoc.save();
-                state.currentContent = pdfBytes;
+                state.currentContent = new Uint8Array(pdfBytes);
                 state.replacementCount += count;
                 addToHistory(`Replaced "${findText}" with "${replaceText}" (${count} times)`);
                 
@@ -999,7 +1094,7 @@
                 action: action,
                 content: state.fileType === 'html' 
                     ? state.currentContent 
-                    : state.currentContent.slice(0),
+                    : new Uint8Array(state.currentContent),
                 replacementCount: state.replacementCount,
                 timestamp: new Date().toLocaleTimeString()
             });
@@ -1012,7 +1107,7 @@
             const historyItem = state.history[state.historyIndex];
             state.currentContent = state.fileType === 'html'
                 ? historyItem.content
-                : historyItem.content.slice(0);
+                : new Uint8Array(historyItem.content);
             state.replacementCount = historyItem.replacementCount;
 
             if (state.fileType === 'html') {
