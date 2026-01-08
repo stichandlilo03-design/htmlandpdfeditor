@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProEdit - Smart PDF Text Editor</title>
+    <title>ProEdit - Universal Document Editor</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -299,6 +299,38 @@
             min-height: 600px;
         }
 
+        /* HTML EDITING */
+        .html-preview {
+            padding: 2rem;
+        }
+
+        .html-preview iframe {
+            width: 100%;
+            min-height: 600px;
+            border: none;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .html-code-editor {
+            padding: 0;
+        }
+
+        .code-editor-textarea {
+            width: 100%;
+            min-height: 600px;
+            padding: 2rem;
+            background: #1E293B;
+            color: #E2E8F0;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.8;
+            resize: vertical;
+        }
+
+        /* PDF EDITING */
         .pdf-text-editor {
             padding: 2rem;
         }
@@ -352,11 +384,13 @@
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
+        /* PDF PREVIEW WITH OVERLAY */
         .pdf-preview-container {
             padding: 2rem;
         }
 
         .pdf-canvas-container {
+            position: relative;
             margin-bottom: 2rem;
             background: white;
             border: 1px solid var(--border);
@@ -369,6 +403,26 @@
             display: block;
             width: 100%;
             height: auto;
+        }
+
+        .text-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .text-overlay span {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Space Mono', monospace;
+            white-space: pre;
+            color: #000;
+            border: 1px solid rgba(99, 102, 241, 0.3);
         }
 
         .pdf-page-label {
@@ -439,12 +493,6 @@
             color: var(--primary);
         }
 
-        .highlight {
-            background: rgba(245, 158, 11, 0.3);
-            padding: 2px 4px;
-            border-radius: 3px;
-        }
-
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -455,20 +503,20 @@
         <aside class="sidebar">
             <div class="logo">
                 <h1>ProEdit</h1>
-                <p>Smart PDF Text Editor</p>
+                <p>Universal Document Editor</p>
             </div>
 
             <div class="upload-section">
                 <div class="upload-area" id="uploadArea">
                     <div class="upload-icon">📁</div>
-                    <p style="font-weight: 600; margin-bottom: 0.25rem;">Upload PDF</p>
-                    <p style="font-size: 0.75rem; color: var(--text-secondary);">Text will be extracted automatically</p>
+                    <p style="font-weight: 600; margin-bottom: 0.25rem;">Upload Document</p>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary);">HTML or PDF</p>
                 </div>
-                <input type="file" id="fileInput" accept=".pdf">
+                <input type="file" id="fileInput" accept=".html,.htm,.pdf">
                 <div class="file-info" id="fileInfo">
                     <div class="file-name" id="fileName"></div>
                     <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">
-                        <span id="fileSize"></span>
+                        <span id="fileSize"></span> • <span id="fileType"></span>
                     </div>
                 </div>
             </div>
@@ -488,10 +536,6 @@
                         <input type="checkbox" id="caseSensitive">
                         <span>Case Sensitive</span>
                     </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="highlightMatches">
-                        <span>Highlight Matches</span>
-                    </label>
                 </div>
                 <button class="btn-primary" id="replaceBtn">🔄 Replace All</button>
                 <button class="btn-secondary" id="clearBtn">✖️ Clear</button>
@@ -500,7 +544,7 @@
             <div class="stats" id="statsSection" style="display: none;">
                 <div class="section-title">📊 Statistics</div>
                 <div class="stat-item">
-                    <span style="font-size: 0.875rem; color: var(--text-secondary);">Total Text</span>
+                    <span style="font-size: 0.875rem; color: var(--text-secondary);">Characters</span>
                     <span class="stat-value" id="totalChars">0</span>
                 </div>
                 <div class="stat-item">
@@ -515,19 +559,14 @@
 
             <div class="controls-section" id="actionsSection" style="display: none;">
                 <div class="section-title">💾 Actions</div>
-                <button class="btn-info" id="previewBtn">👁️ Preview Original PDF</button>
-                <button class="btn-success" id="downloadBtn">⬇️ Download Edited PDF</button>
-                <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 1rem;">
-                    💡 Preview shows the original PDF. Download creates a new PDF with your edited text.
-                </p>
+                <button class="btn-success" id="downloadBtn">⬇️ Download</button>
+                <button class="btn-info" id="copyHtmlBtn" style="display:none;">📋 Copy HTML</button>
             </div>
         </aside>
 
         <main class="main-content">
             <div class="toolbar">
                 <div class="toolbar-group view-tabs" id="viewTabs">
-                    <button class="view-tab active" data-view="edit">✏️ Edit Text</button>
-                    <button class="view-tab" data-view="preview">👁️ Original PDF</button>
                 </div>
             </div>
 
@@ -536,11 +575,8 @@
                     <div style="display: flex; align-items: center; justify-content: center; min-height: 600px; color: var(--text-secondary);">
                         <div style="text-align: center;">
                             <div style="font-size: 4rem; margin-bottom: 1rem;">📄</div>
-                            <h2 style="margin-bottom: 0.5rem;">No PDF Loaded</h2>
-                            <p>Upload a PDF to extract and edit text</p>
-                            <p style="font-size: 0.875rem; margin-top: 1rem; color: var(--text-primary);">
-                                ✨ Text will be automatically extracted!
-                            </p>
+                            <h2 style="margin-bottom: 0.5rem;">No Document Loaded</h2>
+                            <p>Upload HTML or PDF to get started</p>
                         </div>
                     </div>
                 </div>
@@ -553,12 +589,15 @@
 
         const state = {
             file: null,
+            fileType: null,
             pdfBase64: null,
             pdfDoc: null,
             extractedText: '',
             originalText: '',
+            htmlContent: '',
             currentView: 'edit',
             replacementCount: 0,
+            textItems: [],
             formFields: []
         };
 
@@ -567,6 +606,7 @@
         const fileInfo = document.getElementById('fileInfo');
         const fileName = document.getElementById('fileName');
         const fileSize = document.getElementById('fileSize');
+        const fileType = document.getElementById('fileType');
         const findReplaceSection = document.getElementById('findReplaceSection');
         const statsSection = document.getElementById('statsSection');
         const actionsSection = document.getElementById('actionsSection');
@@ -574,8 +614,8 @@
         const viewTabs = document.getElementById('viewTabs');
         const replaceBtn = document.getElementById('replaceBtn');
         const clearBtn = document.getElementById('clearBtn');
-        const previewBtn = document.getElementById('previewBtn');
         const downloadBtn = document.getElementById('downloadBtn');
+        const copyHtmlBtn = document.getElementById('copyHtmlBtn');
         const totalChars = document.getElementById('totalChars');
         const replacementCount = document.getElementById('replacementCount');
         const statusStat = document.getElementById('statusStat');
@@ -589,26 +629,96 @@
         });
 
         async function handleFile(file) {
-            if (!file.name.toLowerCase().endsWith('.pdf')) {
-                showAlert('Please upload a PDF file', 'error');
+            const ext = file.name.split('.').pop().toLowerCase();
+            
+            if (!['html', 'htm', 'pdf'].includes(ext)) {
+                showAlert('Please upload HTML or PDF file', 'error');
                 return;
             }
 
             state.file = file;
+            state.fileType = ext === 'pdf' ? 'pdf' : 'html';
             state.replacementCount = 0;
 
             fileInfo.classList.add('active');
             fileName.textContent = file.name;
             fileSize.textContent = formatFileSize(file.size);
+            fileType.textContent = state.fileType.toUpperCase();
 
-            showAlert('Extracting text from PDF...', 'info');
+            if (state.fileType === 'html') {
+                const text = await file.text();
+                state.htmlContent = text;
+                state.originalText = text;
+                setupHTMLEditor();
+                showAlert('HTML loaded successfully!', 'success');
+            } else {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    state.pdfBase64 = e.target.result.split(',')[1];
+                    await extractTextFromPDF();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
 
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                state.pdfBase64 = e.target.result.split(',')[1];
-                await extractTextFromPDF();
-            };
-            reader.readAsDataURL(file);
+        function setupHTMLEditor() {
+            viewTabs.innerHTML = `
+                <button class="view-tab active" data-view="preview">Preview</button>
+                <button class="view-tab" data-view="code">Code</button>
+            `;
+
+            findReplaceSection.style.display = 'block';
+            statsSection.style.display = 'block';
+            actionsSection.style.display = 'block';
+            copyHtmlBtn.style.display = 'flex';
+
+            renderHTMLView();
+            setupViewSwitching();
+            updateHTMLStats();
+        }
+
+        function renderHTMLView() {
+            if (state.currentView === 'preview') {
+                editorContent.innerHTML = `
+                    <div class="html-preview">
+                        <iframe id="htmlPreviewFrame"></iframe>
+                    </div>
+                `;
+                const iframe = document.getElementById('htmlPreviewFrame');
+                iframe.srcdoc = state.htmlContent;
+            } else {
+                editorContent.innerHTML = `
+                    <div class="html-code-editor">
+                        <textarea class="code-editor-textarea" id="codeEditor"></textarea>
+                    </div>
+                `;
+                const codeEditor = document.getElementById('codeEditor');
+                codeEditor.value = state.htmlContent;
+                codeEditor.addEventListener('input', (e) => {
+                    state.htmlContent = e.target.value;
+                    updateHTMLStats();
+                });
+            }
+        }
+
+        function setupViewSwitching() {
+            document.querySelectorAll('.view-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    state.currentView = e.target.dataset.view;
+                    
+                    if (state.fileType === 'html') {
+                        renderHTMLView();
+                    } else if (state.fileType === 'pdf') {
+                        if (state.currentView === 'edit') {
+                            renderPDFEditView();
+                        } else {
+                            renderPDFPreview();
+                        }
+                    }
+                });
+            });
         }
 
         async function extractTextFromPDF() {
@@ -619,62 +729,79 @@
                     bytes[i] = binaryString.charCodeAt(i);
                 }
 
-                // Load PDF with pdf.js
                 const loadingTask = pdfjsLib.getDocument({data: bytes});
                 state.pdfDoc = await loadingTask.promise;
 
-                // Extract text from all pages
+                // Extract text with positioning info
+                state.textItems = [];
                 let fullText = '';
+                
                 for (let pageNum = 1; pageNum <= state.pdfDoc.numPages; pageNum++) {
                     const page = await state.pdfDoc.getPage(pageNum);
                     const textContent = await page.getTextContent();
+                    const viewport = page.getViewport({ scale: 1.5 });
                     
-                    const pageText = textContent.items.map(item => item.str).join(' ');
-                    fullText += `\n\n=== PAGE ${pageNum} ===\n\n${pageText}`;
+                    textContent.items.forEach(item => {
+                        const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+                        state.textItems.push({
+                            text: item.str,
+                            x: tx[4],
+                            y: tx[5],
+                            fontSize: Math.abs(tx[0]),
+                            pageNum: pageNum,
+                            viewport: viewport
+                        });
+                        fullText += item.str + ' ';
+                    });
+                    fullText += '\n\n';
                 }
 
                 state.extractedText = fullText.trim();
                 state.originalText = fullText.trim();
 
-                // Check for form fields
+                // Check form fields
                 try {
                     const pdfLibDoc = await PDFLib.PDFDocument.load(bytes);
                     const form = pdfLibDoc.getForm();
-                    const fields = form.getFields();
-                    state.formFields = fields.map(field => ({
-                        name: field.getName(),
-                        type: field.constructor.name,
-                        value: field.constructor.name === 'PDFTextField' ? (field.getText() || '') : null
-                    }));
+                    state.formFields = form.getFields();
                 } catch (e) {
                     state.formFields = [];
                 }
 
-                renderEditView();
-                findReplaceSection.style.display = 'block';
-                statsSection.style.display = 'block';
-                actionsSection.style.display = 'block';
-                updateStats();
-
-                showAlert(`✅ Extracted ${fullText.length} characters from ${state.pdfDoc.numPages} pages`, 'success');
+                setupPDFEditor();
+                showAlert(`✅ Extracted text from ${state.pdfDoc.numPages} pages`, 'success');
 
             } catch (error) {
-                console.error('Error extracting text:', error);
-                showAlert('Error extracting text: ' + error.message, 'error');
+                console.error('Error:', error);
+                showAlert('Error: ' + error.message, 'error');
             }
         }
 
-        function renderEditView() {
-            const hasFormFields = state.formFields.length > 0;
-            
+        function setupPDFEditor() {
+            viewTabs.innerHTML = `
+                <button class="view-tab active" data-view="edit">✏️ Edit Text</button>
+                <button class="view-tab" data-view="preview">👁️ Preview Changes</button>
+            `;
+
+            findReplaceSection.style.display = 'block';
+            statsSection.style.display = 'block';
+            actionsSection.style.display = 'block';
+            copyHtmlBtn.style.display = 'none';
+
+            renderPDFEditView();
+            setupViewSwitching();
+            updatePDFStats();
+        }
+
+        function renderPDFEditView() {
             editorContent.innerHTML = `
                 <div class="pdf-text-editor">
                     <div class="pdf-info-banner success">
-                        <h3>✅ Text Extracted Successfully!</h3>
-                        <p><strong>Edit the text below</strong> - Click anywhere to start editing</p>
-                        ${hasFormFields ? `<p style="font-size: 0.875rem; margin-top: 0.5rem; color: var(--text-secondary);">
-                            💡 Found ${state.formFields.length} form fields that will be updated
-                        </p>` : ''}
+                        <h3>✅ Text Extracted - Ready to Edit!</h3>
+                        <p><strong>Click "Preview Changes"</strong> to see your edits on the PDF</p>
+                        <p style="font-size: 0.875rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                            💡 Make changes below, then switch to Preview tab to see them overlaid on the PDF
+                        </p>
                     </div>
                     <div class="extracted-text-display" contenteditable="true" id="editableText">${state.extractedText}</div>
                 </div>
@@ -683,11 +810,11 @@
             const editableText = document.getElementById('editableText');
             editableText.addEventListener('input', () => {
                 state.extractedText = editableText.textContent;
-                updateStats();
+                updatePDFStats();
             });
         }
 
-        async function renderPreviewView() {
+        async function renderPDFPreview() {
             try {
                 const binaryString = atob(state.pdfBase64);
                 const bytes = new Uint8Array(binaryString.length);
@@ -697,6 +824,10 @@
 
                 editorContent.innerHTML = '<div class="pdf-preview-container" id="pdfPreview"></div>';
                 const pdfPreview = document.getElementById('pdfPreview');
+
+                // Map edited text back to original positions
+                const editedWords = state.extractedText.split(/\s+/);
+                let wordIndex = 0;
 
                 for (let pageNum = 1; pageNum <= state.pdfDoc.numPages; pageNum++) {
                     const page = await state.pdfDoc.getPage(pageNum);
@@ -718,6 +849,24 @@
                         viewport: viewport
                     }).promise;
 
+                    // Create text overlay
+                    const textOverlay = document.createElement('div');
+                    textOverlay.className = 'text-overlay';
+
+                    state.textItems.filter(item => item.pageNum === pageNum).forEach(item => {
+                        if (wordIndex < editedWords.length) {
+                            const span = document.createElement('span');
+                            span.textContent = editedWords[wordIndex];
+                            span.style.left = item.x + 'px';
+                            span.style.top = item.y + 'px';
+                            span.style.fontSize = item.fontSize + 'px';
+                            textOverlay.appendChild(span);
+                            wordIndex++;
+                        }
+                    });
+
+                    container.appendChild(textOverlay);
+
                     const pageLabel = document.createElement('div');
                     pageLabel.className = 'pdf-page-label';
                     pageLabel.textContent = `Page ${pageNum} of ${state.pdfDoc.numPages}`;
@@ -727,32 +876,16 @@
                 }
 
             } catch (error) {
-                console.error('Error rendering preview:', error);
+                console.error('Error:', error);
                 showAlert('Error rendering preview', 'error');
             }
         }
-
-        // View switching
-        document.querySelectorAll('.view-tab').forEach(tab => {
-            tab.addEventListener('click', async (e) => {
-                document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-                state.currentView = e.target.dataset.view;
-                
-                if (state.currentView === 'edit') {
-                    renderEditView();
-                } else {
-                    await renderPreviewView();
-                }
-            });
-        });
 
         // Find and Replace
         replaceBtn.addEventListener('click', () => {
             const findText = document.getElementById('findText').value;
             const replaceText = document.getElementById('replaceText').value;
             const caseSensitive = document.getElementById('caseSensitive').checked;
-            const highlightMatches = document.getElementById('highlightMatches').checked;
 
             if (!findText) {
                 showAlert('Please enter text to find', 'error');
@@ -762,28 +895,34 @@
             const flags = caseSensitive ? 'g' : 'gi';
             const regex = new RegExp(escapeRegex(findText), flags);
 
-            const matches = state.extractedText.match(regex);
-            const count = matches ? matches.length : 0;
+            if (state.fileType === 'html') {
+                const matches = state.htmlContent.match(regex);
+                const count = matches ? matches.length : 0;
 
-            if (count === 0) {
-                showAlert('No matches found', 'info');
-                return;
-            }
+                if (count === 0) {
+                    showAlert('No matches found', 'info');
+                    return;
+                }
 
-            if (highlightMatches && !replaceText) {
-                // Just highlight
-                const highlighted = state.extractedText.replace(regex, match => 
-                    `<span class="highlight">${match}</span>`
-                );
-                document.getElementById('editableText').innerHTML = highlighted;
-                showAlert(`Found ${count} match(es)`, 'info');
+                state.htmlContent = state.htmlContent.replace(regex, replaceText);
+                state.replacementCount += count;
+                renderHTMLView();
+                updateHTMLStats();
+                showAlert(`✅ Replaced ${count} occurrence(s)`, 'success');
             } else {
-                // Replace
+                const matches = state.extractedText.match(regex);
+                const count = matches ? matches.length : 0;
+
+                if (count === 0) {
+                    showAlert('No matches found', 'info');
+                    return;
+                }
+
                 state.extractedText = state.extractedText.replace(regex, replaceText);
                 state.replacementCount += count;
-                renderEditView();
-                updateStats();
-                showAlert(`✅ Replaced ${count} occurrence(s)`, 'success');
+                renderPDFEditView();
+                updatePDFStats();
+                showAlert(`✅ Replaced ${count} occurrence(s) - Click Preview to see changes!`, 'success');
             }
         });
 
@@ -791,70 +930,40 @@
             document.getElementById('findText').value = '';
             document.getElementById('replaceText').value = '';
             document.getElementById('caseSensitive').checked = false;
-            document.getElementById('highlightMatches').checked = false;
         });
 
-        previewBtn.addEventListener('click', async () => {
-            state.currentView = 'preview';
-            document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.view-tab')[1].classList.add('active');
-            await renderPreviewView();
+        copyHtmlBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(state.htmlContent);
+                showAlert('HTML copied!', 'success');
+            } catch (error) {
+                showAlert('Failed to copy', 'error');
+            }
         });
 
         downloadBtn.addEventListener('click', async () => {
             try {
                 downloadBtn.disabled = true;
-                downloadBtn.innerHTML = '<span style="width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block;"></span> Creating PDF...';
+                downloadBtn.innerHTML = '<span style="width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block;"></span> Creating...';
 
-                // Try to update form fields if they exist
-                if (state.formFields.length > 0) {
-                    await updateFormFieldsAndDownload();
+                if (state.fileType === 'html') {
+                    const blob = new Blob([state.htmlContent], { type: 'text/html' });
+                    downloadFile(blob, state.file.name.replace(/\.(html|htm)$/, '_edited.html'));
+                    showAlert('✅ HTML downloaded!', 'success');
                 } else {
-                    await createNewPDFFromText();
+                    await createEditedPDF();
                 }
 
             } catch (error) {
-                console.error('Download error:', error);
-                showAlert('Error creating PDF: ' + error.message, 'error');
+                console.error('Error:', error);
+                showAlert('Error: ' + error.message, 'error');
             } finally {
                 downloadBtn.disabled = false;
-                downloadBtn.innerHTML = '⬇️ Download Edited PDF';
+                downloadBtn.innerHTML = '⬇️ Download';
             }
         });
 
-        async function updateFormFieldsAndDownload() {
-            const binaryString = atob(state.pdfBase64);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-
-            const pdfDoc = await PDFLib.PDFDocument.load(bytes);
-            const form = pdfDoc.getForm();
-            const fields = form.getFields();
-
-            // Update form fields with changed text
-            fields.forEach(field => {
-                if (field.constructor.name === 'PDFTextField') {
-                    const oldValue = field.getText() || '';
-                    if (oldValue && state.extractedText.includes(oldValue)) {
-                        // Field value unchanged in edited text
-                    } else {
-                        // Try to find updated value in edited text
-                        const fieldName = field.getName();
-                        // Simple update - you can enhance this logic
-                        field.setText(state.extractedText.substring(0, 100));
-                    }
-                }
-            });
-
-            const pdfBytes = await pdfDoc.save();
-            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-            downloadFile(blob, state.file.name.replace('.pdf', '_edited.pdf'));
-            showAlert('✅ PDF downloaded with updated form fields!', 'success');
-        }
-
-        async function createNewPDFFromText() {
+        async function createEditedPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
@@ -876,10 +985,16 @@
             });
             
             doc.save(state.file.name.replace('.pdf', '_edited.pdf'));
-            showAlert('✅ New PDF created with edited text!', 'success');
+            showAlert('✅ PDF downloaded!', 'success');
         }
 
-        function updateStats() {
+        function updateHTMLStats() {
+            totalChars.textContent = state.htmlContent.length.toLocaleString();
+            replacementCount.textContent = state.replacementCount;
+            statusStat.textContent = state.htmlContent === state.originalText ? 'Original' : 'Modified';
+        }
+
+        function updatePDFStats() {
             totalChars.textContent = state.extractedText.length.toLocaleString();
             replacementCount.textContent = state.replacementCount;
             statusStat.textContent = state.extractedText === state.originalText ? 'Original' : 'Modified';
