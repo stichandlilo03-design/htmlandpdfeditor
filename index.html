@@ -22,6 +22,7 @@
             --text-secondary: #64748B;
             --border: #E2E8F0;
             --shadow: 0 10px 40px rgba(99, 102, 241, 0.1);
+            --shadow-lg: 0 20px 60px rgba(99, 102, 241, 0.15);
         }
 
         * {
@@ -44,6 +45,7 @@
             overflow: hidden;
         }
 
+        /* Sidebar */
         .sidebar {
             background: var(--bg-card);
             border-right: 1px solid var(--border);
@@ -92,6 +94,11 @@
             background: rgba(99, 102, 241, 0.05);
         }
 
+        .upload-area.dragover {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
         .upload-icon {
             font-size: 2.5rem;
             margin-bottom: 0.5rem;
@@ -111,6 +118,22 @@
 
         .file-info.active {
             display: block;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: var(--primary);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.875rem;
+            word-break: break-all;
+        }
+
+        .file-meta {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
         }
 
         .controls-section {
@@ -139,7 +162,8 @@
             margin-bottom: 0.5rem;
         }
 
-        input[type="text"] {
+        input[type="text"],
+        textarea {
             width: 100%;
             padding: 0.75rem;
             background: var(--bg-secondary);
@@ -147,9 +171,11 @@
             border-radius: 8px;
             font-size: 0.875rem;
             font-family: 'Space Mono', monospace;
+            transition: all 0.2s ease;
         }
 
-        input[type="text"]:focus {
+        input[type="text"]:focus,
+        textarea:focus {
             outline: none;
             border-color: var(--primary);
             background: var(--bg-card);
@@ -169,6 +195,19 @@
             cursor: pointer;
         }
 
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
         button {
             padding: 0.875rem 1.25rem;
             border: none;
@@ -184,24 +223,31 @@
             gap: 0.5rem;
         }
 
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .btn-primary {
             background: var(--primary);
             color: white;
-            width: 100%;
-            margin-top: 1rem;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background: var(--primary-dark);
             transform: translateY(-1px);
+            box-shadow: var(--shadow);
         }
 
         .btn-secondary {
             background: var(--bg-secondary);
             color: var(--text-primary);
             border: 2px solid var(--border);
-            width: 100%;
-            margin-top: 0.5rem;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--bg-card);
+            border-color: var(--text-secondary);
         }
 
         .btn-success {
@@ -209,6 +255,55 @@
             color: white;
         }
 
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #D97706;
+            transform: translateY(-1px);
+        }
+
+        .btn-icon {
+            background: transparent;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .btn-icon:hover:not(:disabled) {
+            background: var(--bg-secondary);
+        }
+
+        .stats {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.125rem;
+        }
+
+        /* Main Content */
         .main-content {
             display: flex;
             flex-direction: column;
@@ -222,12 +317,41 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            flex-wrap: wrap;
         }
 
         .toolbar-group {
             display: flex;
             gap: 0.5rem;
+            align-items: center;
+            padding-right: 0.75rem;
+            border-right: 1px solid var(--border);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
             margin-left: auto;
+        }
+
+        .view-tabs {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .view-tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .view-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
         }
 
         .editor-container {
@@ -246,6 +370,42 @@
             min-height: 600px;
         }
 
+        /* HTML Editor */
+        .html-preview {
+            padding: 2rem;
+        }
+
+        .html-preview iframe {
+            width: 100%;
+            min-height: 600px;
+            border: none;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .html-code-editor {
+            padding: 0;
+        }
+
+        .code-editor-textarea {
+            width: 100%;
+            min-height: 600px;
+            padding: 2rem;
+            background: #1E293B;
+            color: #E2E8F0;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.8;
+            resize: vertical;
+        }
+
+        .code-editor-textarea:focus {
+            outline: 2px solid var(--primary);
+        }
+
+        /* PDF Editor */
         .pdf-editor {
             padding: 2rem;
         }
@@ -264,6 +424,21 @@
             margin-bottom: 0.75rem;
         }
 
+        .pdf-info-banner p {
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .pdf-info-banner .tip {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+        }
+
         .pdf-canvas-container {
             position: relative;
             margin-bottom: 2rem;
@@ -280,51 +455,26 @@
             height: auto;
         }
 
-        /* TEXT LAYER - This makes PDFs editable! */
-        .textLayer {
-            position: absolute;
-            left: 0;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            overflow: hidden;
-            opacity: 1;
-            line-height: 1;
+        .pdf-page-label {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
         }
 
-        .textLayer > span {
-            color: #000;
-            position: absolute;
-            white-space: pre;
-            cursor: text;
-            transform-origin: 0% 0%;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 2px;
-            border: 1px solid transparent;
-            transition: all 0.2s ease;
-        }
-
-        .textLayer > span:hover {
-            background: rgba(99, 102, 241, 0.1);
-            border-color: var(--primary);
-        }
-
-        .textLayer > span.editing {
-            background: white;
-            border: 2px solid var(--primary);
-            outline: none;
-            z-index: 100;
-        }
-
+        /* Alerts */
         .alert {
             position: fixed;
             top: 2rem;
             right: 2rem;
             padding: 1rem 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            box-shadow: var(--shadow-lg);
             animation: slideInRight 0.3s ease-out;
             z-index: 1000;
+            max-width: 400px;
         }
 
         .alert-success {
@@ -353,25 +503,63 @@
             }
         }
 
-        .stats {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border);
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
         }
 
-        .stat-item {
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+        }
+
+        /* History Panel */
+        .history-section {
+            padding: 1.5rem;
+        }
+
+        .history-item {
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.75rem;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
-        .stat-value {
-            font-weight: 700;
-            color: var(--primary);
+        .history-item:hover {
+            background: var(--bg-main);
+        }
+
+        .history-item.current {
+            background: var(--primary);
+            color: white;
         }
     </style>
 </head>
 <body>
     <div class="app-container">
+        <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
                 <h1>ProEdit</h1>
@@ -381,11 +569,17 @@
             <div class="upload-section">
                 <div class="upload-area" id="uploadArea">
                     <div class="upload-icon">📁</div>
-                    <p style="font-weight: 600;">Upload PDF</p>
+                    <p style="font-weight: 600; margin-bottom: 0.25rem;">Upload Document</p>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary);">HTML or PDF</p>
                 </div>
-                <input type="file" id="fileInput" accept=".pdf">
+                <input type="file" id="fileInput" accept=".html,.htm,.pdf">
                 <div class="file-info" id="fileInfo">
-                    <div id="fileName"></div>
+                    <div class="file-name" id="fileName"></div>
+                    <div class="file-meta">
+                        <span id="fileSize"></span>
+                        <span>•</span>
+                        <span id="fileType"></span>
+                    </div>
                 </div>
             </div>
 
@@ -404,28 +598,67 @@
                         <input type="checkbox" id="caseSensitive">
                         <span>Case Sensitive</span>
                     </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="wholeWord">
+                        <span>Whole Words Only</span>
+                    </label>
                 </div>
-                <button class="btn-primary" id="replaceBtn">🔄 Replace All</button>
-                <button class="btn-secondary" id="clearBtn">✖️ Clear</button>
+                <div class="button-group">
+                    <button class="btn-primary" id="replaceBtn">
+                        🔄 Replace All
+                    </button>
+                    <button class="btn-secondary" id="clearBtn">
+                        ✖️ Clear Fields
+                    </button>
+                </div>
             </div>
 
             <div class="stats" id="statsSection" style="display: none;">
                 <div class="section-title">Statistics</div>
                 <div class="stat-item">
-                    <span>Replacements</span>
+                    <span class="stat-label">Replacements</span>
                     <span class="stat-value" id="replacementCount">0</span>
                 </div>
                 <div class="stat-item">
-                    <span>Editable Items</span>
-                    <span class="stat-value" id="editableCount">0</span>
+                    <span class="stat-label">File Size</span>
+                    <span class="stat-value" id="fileSizeStat">-</span>
                 </div>
+                <div class="stat-item">
+                    <span class="stat-label">Status</span>
+                    <span class="stat-value" id="statusStat">Ready</span>
+                </div>
+            </div>
+
+            <div class="history-section" id="historySection" style="display: none;">
+                <div class="section-title">History</div>
+                <div id="historyList"></div>
             </div>
         </aside>
 
+        <!-- Main Content -->
         <main class="main-content">
             <div class="toolbar">
                 <div class="toolbar-group">
-                    <button class="btn-success" id="downloadBtn" style="display: none;">⬇️ Download PDF</button>
+                    <button class="btn-icon" id="undoBtn" title="Undo" disabled>
+                        ↶
+                    </button>
+                    <button class="btn-icon" id="redoBtn" title="Redo" disabled>
+                        ↷
+                    </button>
+                </div>
+
+                <div class="toolbar-group view-tabs" id="viewTabs" style="display: none;">
+                    <button class="view-tab active" data-view="preview">Preview</button>
+                    <button class="view-tab" data-view="code">Code</button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="btn-success" id="copyHtmlBtn" style="display: none;">
+                        📋 Copy HTML
+                    </button>
+                    <button class="btn-success" id="downloadBtn" style="display: none;">
+                        ⬇️ Download
+                    </button>
                 </div>
             </div>
 
@@ -434,8 +667,8 @@
                     <div style="display: flex; align-items: center; justify-content: center; min-height: 600px; color: var(--text-secondary);">
                         <div style="text-align: center;">
                             <div style="font-size: 4rem; margin-bottom: 1rem;">📄</div>
-                            <h2>No PDF Loaded</h2>
-                            <p>Upload a PDF to start editing</p>
+                            <h2 style="margin-bottom: 0.5rem;">No Document Loaded</h2>
+                            <p>Upload an HTML or PDF file to get started</p>
                         </div>
                     </div>
                 </div>
@@ -444,88 +677,204 @@
     </div>
 
     <script>
+        // Set PDF.js worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+        // State management
         const state = {
             file: null,
+            fileType: null,
+            originalContent: null,
+            currentContent: null,
+            history: [],
+            historyIndex: -1,
             pdfDoc: null,
-            pdfBase64: null,
+            currentView: 'preview',
             replacementCount: 0,
-            textItems: [] // Store all editable text items
+            pdfFormFields: []
         };
 
+        // Elements
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const fileInfo = document.getElementById('fileInfo');
         const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const fileType = document.getElementById('fileType');
         const findReplaceSection = document.getElementById('findReplaceSection');
         const statsSection = document.getElementById('statsSection');
+        const historySection = document.getElementById('historySection');
         const editorContent = document.getElementById('editorContent');
+        const viewTabs = document.getElementById('viewTabs');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
         const replaceBtn = document.getElementById('replaceBtn');
         const clearBtn = document.getElementById('clearBtn');
+        const copyHtmlBtn = document.getElementById('copyHtmlBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const replacementCount = document.getElementById('replacementCount');
-        const editableCount = document.getElementById('editableCount');
+        const fileSizeStat = document.getElementById('fileSizeStat');
+        const statusStat = document.getElementById('statusStat');
 
+        // Upload handlers
         uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 handleFile(e.target.files[0]);
             }
         });
 
+        // Handle file upload
         async function handleFile(file) {
-            if (!file.name.toLowerCase().endsWith('.pdf')) {
-                showAlert('Please upload a PDF file', 'error');
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!['html', 'htm', 'pdf'].includes(ext)) {
+                showAlert('Please upload an HTML or PDF file', 'error');
                 return;
             }
 
             state.file = file;
+            state.fileType = ext === 'pdf' ? 'pdf' : 'html';
+            state.history = [];
+            state.historyIndex = -1;
             state.replacementCount = 0;
 
+            // Update UI
             fileInfo.classList.add('active');
             fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileType.textContent = state.fileType.toUpperCase();
+            fileSizeStat.textContent = formatFileSize(file.size);
             findReplaceSection.style.display = 'block';
             statsSection.style.display = 'block';
 
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                state.pdfBase64 = e.target.result.split(',')[1];
-                await renderPDF();
+            if (state.fileType === 'html') {
+                const text = await file.text();
+                state.originalContent = text;
+                state.currentContent = text;
+                addToHistory('Original document loaded');
+                renderHTML();
+                viewTabs.style.display = 'flex';
+                copyHtmlBtn.style.display = 'flex';
                 downloadBtn.style.display = 'flex';
-                showAlert('PDF loaded - All text is now editable!', 'success');
-            };
-            reader.readAsDataURL(file);
+                showAlert('HTML file loaded successfully', 'success');
+            } else {
+                // Store PDF as base64 string
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const base64 = e.target.result.split(',')[1];
+                    state.originalContent = base64;
+                    state.currentContent = base64;
+                    addToHistory('Original PDF loaded');
+                    await renderPDF();
+                    viewTabs.style.display = 'none';
+                    copyHtmlBtn.style.display = 'none';
+                    downloadBtn.style.display = 'flex';
+                    showAlert('PDF file loaded successfully', 'success');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            updateHistoryUI();
         }
 
+        // Render HTML
+        function renderHTML() {
+            const view = state.currentView;
+            if (view === 'preview') {
+                editorContent.innerHTML = `
+                    <div class="html-preview">
+                        <iframe id="htmlPreviewFrame"></iframe>
+                    </div>
+                `;
+                const iframe = document.getElementById('htmlPreviewFrame');
+                iframe.srcdoc = state.currentContent;
+            } else {
+                editorContent.innerHTML = `
+                    <div class="html-code-editor">
+                        <textarea class="code-editor-textarea" id="codeEditor"></textarea>
+                    </div>
+                `;
+                const codeEditor = document.getElementById('codeEditor');
+                codeEditor.value = state.currentContent;
+                codeEditor.addEventListener('input', (e) => {
+                    state.currentContent = e.target.value;
+                });
+            }
+        }
+
+        // Render PDF - Clean version without text overlay
         async function renderPDF() {
             try {
-                const binaryString = atob(state.pdfBase64);
+                // Convert base64 to Uint8Array
+                const binaryString = atob(state.currentContent);
                 const bytes = new Uint8Array(binaryString.length);
                 for (let i = 0; i < binaryString.length; i++) {
                     bytes[i] = binaryString.charCodeAt(i);
                 }
-
+                
                 const loadingTask = pdfjsLib.getDocument({data: bytes});
                 state.pdfDoc = await loadingTask.promise;
-
+                
                 editorContent.innerHTML = '<div class="pdf-editor" id="pdfEditor"></div>';
                 const pdfEditor = document.getElementById('pdfEditor');
 
-                // Info banner
+                // Check for form fields
+                try {
+                    const pdfLibDoc = await PDFLib.PDFDocument.load(bytes);
+                    const form = pdfLibDoc.getForm();
+                    const fields = form.getFields();
+                    
+                    state.pdfFormFields = fields.map(field => ({
+                        name: field.getName(),
+                        type: field.constructor.name,
+                        value: field.constructor.name === 'PDFTextField' ? (field.getText() || '') : null
+                    }));
+                } catch (e) {
+                    console.log('No form fields found:', e);
+                    state.pdfFormFields = [];
+                }
+
+                // Show info banner
                 const banner = document.createElement('div');
                 banner.className = 'pdf-info-banner';
-                banner.innerHTML = `
-                    <h3>✏️ Text Editing Enabled</h3>
-                    <p><strong>Click any text</strong> to edit it directly, or use <strong>Find & Replace</strong> to change text throughout the document.</p>
-                    <p style="font-size: 0.875rem; margin-top: 0.5rem; color: var(--text-secondary);">💡 All visible text in this PDF can be edited!</p>
-                `;
+                if (state.pdfFormFields.length > 0) {
+                    banner.innerHTML = `
+                        <h3>📝 ${state.pdfFormFields.length} Editable Form Fields Found</h3>
+                        <p><strong>Use Find & Replace</strong> to edit the text in form fields.</p>
+                        <div class="tip">
+                            💡 <strong>Tip:</strong> PDF form fields are the only parts that can be permanently edited and saved. Regular text in PDFs cannot be modified.
+                        </div>
+                    `;
+                } else {
+                    banner.innerHTML = `
+                        <h3>📄 PDF Preview</h3>
+                        <p>This PDF contains no editable form fields. You can view it here but cannot make permanent edits.</p>
+                        <div class="tip">
+                            💡 <strong>Note:</strong> Only PDF files with form fields support Find & Replace editing. This is a limitation of the PDF format.
+                        </div>
+                    `;
+                }
                 pdfEditor.appendChild(banner);
 
-                state.textItems = [];
-                let totalTextItems = 0;
-
-                // Render all pages with text overlay
+                // Render all pages cleanly
                 for (let pageNum = 1; pageNum <= state.pdfDoc.numPages; pageNum++) {
                     const page = await state.pdfDoc.getPage(pageNum);
                     const viewport = page.getViewport({ scale: 1.5 });
@@ -546,137 +895,305 @@
                         viewport: viewport
                     }).promise;
 
-                    // Extract text content
-                    const textContent = await page.getTextContent();
-                    const textLayer = document.createElement('div');
-                    textLayer.className = 'textLayer';
-
-                    textContent.items.forEach((item, index) => {
-                        const textSpan = document.createElement('span');
-                        textSpan.textContent = item.str;
-                        textSpan.dataset.pageNum = pageNum;
-                        textSpan.dataset.itemIndex = index;
-                        textSpan.contentEditable = 'true';
-
-                        // Position the text
-                        const tx = pdfjsLib.Util.transform(
-                            viewport.transform,
-                            item.transform
-                        );
-                        
-                        textSpan.style.left = tx[4] + 'px';
-                        textSpan.style.top = tx[5] + 'px';
-                        textSpan.style.fontSize = Math.abs(tx[0]) + 'px';
-                        textSpan.style.fontFamily = item.fontName || 'sans-serif';
-
-                        // Make it editable
-                        textSpan.addEventListener('focus', function() {
-                            this.classList.add('editing');
-                        });
-
-                        textSpan.addEventListener('blur', function() {
-                            this.classList.remove('editing');
-                        });
-
-                        textSpan.addEventListener('keydown', function(e) {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                this.blur();
-                            }
-                        });
-
-                        textLayer.appendChild(textSpan);
-                        state.textItems.push(textSpan);
-                        totalTextItems++;
-                    });
-
-                    container.appendChild(textLayer);
-
                     const pageLabel = document.createElement('div');
-                    pageLabel.style.cssText = 'text-align: center; padding: 1rem; background: var(--bg-secondary); color: var(--text-secondary); font-weight: 600;';
-                    pageLabel.innerHTML = `Page ${pageNum} of ${state.pdfDoc.numPages}`;
+                    pageLabel.className = 'pdf-page-label';
+                    pageLabel.innerHTML = `Page ${pageNum} <span style="font-weight: 400;">of ${state.pdfDoc.numPages}</span>`;
                     container.appendChild(pageLabel);
 
                     pdfEditor.appendChild(container);
                 }
 
-                editableCount.textContent = totalTextItems;
-
             } catch (error) {
                 console.error('Error rendering PDF:', error);
+                editorContent.innerHTML = `
+                    <div style="padding: 4rem 2rem; text-align: center;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+                        <h3 style="color: var(--danger); margin-bottom: 1rem;">Error Loading PDF</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">${error.message}</p>
+                        <p style="font-size: 0.875rem; color: var(--text-secondary);">Please try uploading a different PDF file.</p>
+                    </div>
+                `;
                 showAlert('Error loading PDF: ' + error.message, 'error');
             }
         }
 
-        // Find and Replace
-        replaceBtn.addEventListener('click', () => {
+        // Find and replace
+        replaceBtn.addEventListener('click', async () => {
             const findText = document.getElementById('findText').value;
             const replaceText = document.getElementById('replaceText').value;
-            const caseSensitive = document.getElementById('caseSensitive').checked;
 
             if (!findText) {
                 showAlert('Please enter text to find', 'error');
                 return;
             }
 
-            let count = 0;
-            const searchText = caseSensitive ? findText : findText.toLowerCase();
+            if (!state.file) {
+                showAlert('Please upload a file first', 'error');
+                return;
+            }
 
-            state.textItems.forEach(item => {
-                const itemText = caseSensitive ? item.textContent : item.textContent.toLowerCase();
-                
-                if (itemText.includes(searchText)) {
-                    if (caseSensitive) {
-                        item.textContent = item.textContent.split(findText).join(replaceText);
-                    } else {
-                        const regex = new RegExp(escapeRegex(findText), 'gi');
-                        item.textContent = item.textContent.replace(regex, replaceText);
-                    }
-                    count++;
+            replaceBtn.disabled = true;
+            replaceBtn.innerHTML = '<span class="spinner"></span> Processing...';
+
+            try {
+                if (state.fileType === 'html') {
+                    await replaceInHTML(findText, replaceText);
+                } else {
+                    await replaceInPDF(findText, replaceText);
                 }
-            });
-
-            if (count > 0) {
-                state.replacementCount += count;
-                replacementCount.textContent = state.replacementCount;
-                showAlert(`Replaced ${count} occurrence(s)`, 'success');
-            } else {
-                showAlert('No matches found', 'info');
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+                console.error(error);
+            } finally {
+                replaceBtn.disabled = false;
+                replaceBtn.innerHTML = '🔄 Replace All';
             }
         });
 
-        clearBtn.addEventListener('click', () => {
-            document.getElementById('findText').value = '';
-            document.getElementById('replaceText').value = '';
-            document.getElementById('caseSensitive').checked = false;
+        // Replace in HTML
+        async function replaceInHTML(findText, replaceText) {
+            const caseSensitive = document.getElementById('caseSensitive').checked;
+            const wholeWord = document.getElementById('wholeWord').checked;
+
+            let flags = caseSensitive ? 'g' : 'gi';
+            let pattern = wholeWord ? `\\b${escapeRegex(findText)}\\b` : escapeRegex(findText);
+            let regex = new RegExp(pattern, flags);
+
+            const matches = state.currentContent.match(regex);
+            const count = matches ? matches.length : 0;
+
+            if (count === 0) {
+                showAlert('No matches found', 'info');
+                return;
+            }
+
+            state.currentContent = state.currentContent.replace(regex, replaceText);
+            state.replacementCount += count;
+            addToHistory(`Replaced "${findText}" with "${replaceText}" (${count} times)`);
+            
+            renderHTML();
+            updateStats();
+            updateHistoryUI();
+            showAlert(`Successfully replaced ${count} occurrence(s)`, 'success');
+        }
+
+        // Replace in PDF
+        async function replaceInPDF(findText, replaceText) {
+            const caseSensitive = document.getElementById('caseSensitive').checked;
+            
+            try {
+                // Convert base64 to Uint8Array
+                const binaryString = atob(state.currentContent);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                
+                const pdfDoc = await PDFLib.PDFDocument.load(bytes);
+                const form = pdfDoc.getForm();
+                const fields = form.getFields();
+                let count = 0;
+
+                fields.forEach(field => {
+                    if (field.constructor.name === 'PDFTextField') {
+                        const text = field.getText() || '';
+                        const regex = caseSensitive 
+                            ? new RegExp(escapeRegex(findText), 'g')
+                            : new RegExp(escapeRegex(findText), 'gi');
+                        
+                        if (regex.test(text)) {
+                            const newText = text.replace(regex, replaceText);
+                            const matches = text.match(regex);
+                            count += matches ? matches.length : 0;
+                            field.setText(newText);
+                        }
+                    }
+                });
+
+                if (count === 0) {
+                    if (state.pdfFormFields.length === 0) {
+                        showAlert('This PDF has no editable form fields. Cannot perform find & replace.', 'info');
+                    } else {
+                        showAlert('No matches found in form fields.', 'info');
+                    }
+                    return;
+                }
+
+                const pdfBytes = await pdfDoc.save();
+                
+                // Convert back to base64
+                let binary = '';
+                const bytes2 = new Uint8Array(pdfBytes);
+                for (let i = 0; i < bytes2.length; i++) {
+                    binary += String.fromCharCode(bytes2[i]);
+                }
+                state.currentContent = btoa(binary);
+                
+                state.replacementCount += count;
+                addToHistory(`Replaced "${findText}" with "${replaceText}" (${count} times)`);
+                
+                await renderPDF();
+                updateStats();
+                updateHistoryUI();
+                showAlert(`Successfully replaced ${count} occurrence(s) in form fields`, 'success');
+            } catch (error) {
+                console.error('PDF processing error:', error);
+                showAlert('Error processing PDF: ' + error.message, 'error');
+            }
+        }
+
+        // Undo/Redo
+        undoBtn.addEventListener('click', () => {
+            if (state.historyIndex > 0) {
+                state.historyIndex--;
+                restoreFromHistory();
+            }
         });
 
-        downloadBtn.addEventListener('click', async () => {
+        redoBtn.addEventListener('click', () => {
+            if (state.historyIndex < state.history.length - 1) {
+                state.historyIndex++;
+                restoreFromHistory();
+            }
+        });
+
+        function addToHistory(action) {
+            if (state.historyIndex < state.history.length - 1) {
+                state.history = state.history.slice(0, state.historyIndex + 1);
+            }
+
+            state.history.push({
+                action: action,
+                content: state.currentContent,
+                replacementCount: state.replacementCount,
+                timestamp: new Date().toLocaleTimeString()
+            });
+
+            state.historyIndex = state.history.length - 1;
+            updateUndoRedoButtons();
+        }
+
+        function restoreFromHistory() {
+            const historyItem = state.history[state.historyIndex];
+            state.currentContent = historyItem.content;
+            state.replacementCount = historyItem.replacementCount;
+
+            if (state.fileType === 'html') {
+                renderHTML();
+            } else {
+                renderPDF();
+            }
+
+            updateStats();
+            updateHistoryUI();
+            updateUndoRedoButtons();
+            showAlert('Restored: ' + historyItem.action, 'info');
+        }
+
+        function updateUndoRedoButtons() {
+            undoBtn.disabled = state.historyIndex <= 0;
+            redoBtn.disabled = state.historyIndex >= state.history.length - 1;
+        }
+
+        function updateHistoryUI() {
+            if (state.history.length === 0) {
+                historySection.style.display = 'none';
+                return;
+            }
+
+            historySection.style.display = 'block';
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+
+            state.history.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item' + (index === state.historyIndex ? ' current' : '');
+                div.innerHTML = `
+                    <div>
+                        <div style="font-weight: 600;">${item.action}</div>
+                        <div style="font-size: 0.75rem; opacity: 0.8;">${item.timestamp}</div>
+                    </div>
+                `;
+                div.addEventListener('click', () => {
+                    state.historyIndex = index;
+                    restoreFromHistory();
+                });
+                historyList.appendChild(div);
+            });
+        }
+
+        // View switching
+        document.querySelectorAll('.view-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                state.currentView = e.target.dataset.view;
+                if (state.fileType === 'html') {
+                    renderHTML();
+                }
+            });
+        });
+
+        // Copy HTML
+        copyHtmlBtn.addEventListener('click', async () => {
             try {
-                // For now, create a simple download of original
-                // In production, you'd use pdf-lib to rebuild the PDF with changes
-                const binaryString = atob(state.pdfBase64);
+                await navigator.clipboard.writeText(state.currentContent);
+                showAlert('HTML copied to clipboard!', 'success');
+            } catch (error) {
+                showAlert('Failed to copy', 'error');
+            }
+        });
+
+        // Download
+        downloadBtn.addEventListener('click', () => {
+            if (state.fileType === 'html') {
+                const blob = new Blob([state.currentContent], { type: 'text/html' });
+                downloadFile(blob, state.file.name.replace(/\.(html|htm)$/, '_edited.html'));
+            } else {
+                const binaryString = atob(state.currentContent);
                 const bytes = new Uint8Array(binaryString.length);
                 for (let i = 0; i < binaryString.length; i++) {
                     bytes[i] = binaryString.charCodeAt(i);
                 }
                 const blob = new Blob([bytes], { type: 'application/pdf' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = state.file.name.replace('.pdf', '_edited.pdf');
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                showAlert('PDF downloaded! Note: Visual edits shown, full PDF modification requires pdf-lib integration', 'info');
-            } catch (error) {
-                showAlert('Error downloading: ' + error.message, 'error');
+                downloadFile(blob, state.file.name.replace('.pdf', '_edited.pdf'));
             }
+            showAlert('File downloaded successfully!', 'success');
         });
 
+        // Clear button
+        clearBtn.addEventListener('click', () => {
+            document.getElementById('findText').value = '';
+            document.getElementById('replaceText').value = '';
+            document.getElementById('caseSensitive').checked = false;
+            document.getElementById('wholeWord').checked = false;
+        });
+
+        // Helper functions
         function escapeRegex(string) {
             return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function downloadFile(blob, fileName) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        function updateStats() {
+            replacementCount.textContent = state.replacementCount;
+            statusStat.textContent = state.historyIndex > 0 ? 'Modified' : 'Original';
         }
 
         function showAlert(message, type) {
@@ -684,7 +1201,10 @@
             alert.className = `alert alert-${type}`;
             alert.textContent = message;
             document.body.appendChild(alert);
-            setTimeout(() => alert.remove(), 3000);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
         }
     </script>
 </body>
