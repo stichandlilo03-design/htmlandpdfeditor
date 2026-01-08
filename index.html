@@ -461,6 +461,32 @@
             transition: width 0.3s ease;
         }
 
+        .pdf-upload-options {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f9ff;
+            border-radius: 8px;
+            border: 1px solid #7dd3fc;
+        }
+
+        .pdf-upload-options h4 {
+            color: #0369a1;
+            margin-bottom: 10px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin: 10px 0;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
         @media (max-width: 1200px) {
             .editor-grid {
                 grid-template-columns: 1fr;
@@ -581,6 +607,23 @@
                     <button class="success" id="savePdfBtn">
                         <i class="fas fa-save"></i> Save PDF Edits
                     </button>
+                    <div class="pdf-upload-options">
+                        <h4><i class="fas fa-cog"></i> PDF Processing</h4>
+                        <p style="font-size: 12px; margin-bottom: 10px;">If PDF fails to load, try:</p>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="pdfMode" value="text" checked>
+                                Text Extraction Only
+                            </label>
+                            <label>
+                                <input type="radio" name="pdfMode" value="full">
+                                Full PDF View
+                            </label>
+                        </div>
+                        <button id="reprocessPdfBtn" class="secondary" style="margin-top: 10px; padding: 8px;">
+                            <i class="fas fa-redo"></i> Reprocess PDF
+                        </button>
+                    </div>
                 </div>
 
                 <div class="stats">
@@ -616,7 +659,10 @@
     </div>
 
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        // Set PDF.js worker source
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
 
         let state = {
             fileType: null,
@@ -633,7 +679,8 @@
             isPdfModified: false,
             pdfPages: [],
             pdfAnnotations: [],
-            selection: null
+            selection: null,
+            pdfMode: 'full' // 'text' or 'full'
         };
 
         // Initialize
@@ -691,6 +738,14 @@
             document.getElementById('savePdfBtn').addEventListener('click', savePdfEdits);
             document.getElementById('addTextBtn').addEventListener('click', addTextToPdf);
             document.getElementById('addImageBtn').addEventListener('click', addImageToPdf);
+            document.getElementById('reprocessPdfBtn').addEventListener('click', reprocessPdf);
+
+            // PDF mode selection
+            document.querySelectorAll('input[name="pdfMode"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    state.pdfMode = e.target.value;
+                });
+            });
 
             // Real-time find
             document.getElementById('findInput').addEventListener('input', debounce(findText, 300));
@@ -728,6 +783,12 @@
             showProgress(30);
             
             try {
+                // Reset state
+                state.fileType = null;
+                state.pdfData = null;
+                state.pdfDoc = null;
+                state.pdfLibDoc = null;
+                
                 if (ext === 'html' || ext === 'htm') {
                     await handleHTML(file);
                 } else if (ext === 'pdf') {
@@ -741,6 +802,7 @@
                     document.getElementById('uploadProgress').style.width = '0%';
                 }, 500);
             } catch (error) {
+                console.error('File loading error:', error);
                 showAlert(`Error loading file: ${error.message}`, 'error');
                 showProgress(0);
             }
@@ -773,39 +835,166 @@
             state.fileType = 'pdf';
             state.fileName = file.name;
             
-            const arrayBuffer = await file.arrayBuffer();
-            state.pdfData = new Uint8Array(arrayBuffer);
-            
-            // Load with pdf.js for display
-            const loadingTask = pdfjsLib.getDocument({data: state.pdfData});
-            state.pdfDoc = await loadingTask.promise;
-            
-            // Load with pdf-lib for editing
-            state.pdfLibDoc = await PDFLib.PDFDocument.load(state.pdfData);
-            state.pdfPages = await state.pdfLibDoc.getPages();
-            
-            // Extract text
+            try {
+                // Read file as ArrayBuffer first
+                const arrayBuffer = await file.arrayBuffer();
+                
+                // Check if it's a valid PDF by checking the header
+                const header = new Uint8Array(arrayBuffer.slice(0, 5));
+                const headerStr = String.fromCharCode.apply(null, header);
+                
+                if (!headerStr.startsWith('%PDF-')) {
+                    showAlert('Warning: File may not be a valid PDF. Trying to process anyway...', 'warning');
+                }
+                
+                state.pdfData = new Uint8Array(arrayBuffer);
+                
+                // Try to load with pdf-lib first (more tolerant)
+                try {
+                    state.pdfLibDoc = await PDFLib.PDFDocument.load(state.pdfData, {
+                        ignoreEncryption: true,
+                        updateMetadata: false
+                    });
+                    state.pdfPages = await state.pdfLibDoc.getPages();
+                } catch (pdfLibError) {
+                    console.warn('PDF-Lib loading failed:', pdfLibError);
+                    state.pdfLibDoc = null;
+                }
+                
+                // Extract text using pdf.js or fallback
+                let text = '';
+                let numPages = 0;
+                
+                try {
+                    // Try to use pdf.js for rendering
+                    const loadingTask = pdfjsLib.getDocument({ 
+                        data: state.pdfData,
+                        disableAutoFetch: true,
+                        disableStream: true,
+                        verbosity: 0
+                    });
+                    
+                    state.pdfDoc = await loadingTask.promise;
+                    numPages = state.pdfDoc.numPages;
+                    
+                    // Extract text from each page
+                    for (let i = 1; i <= numPages; i++) {
+                        try {
+                            const page = await state.pdfDoc.getPage(i);
+                            const content = await page.getTextContent();
+                            text += content.items.map(item => item.str).join(' ') + '\n\n';
+                        } catch (pageError) {
+                            console.warn(`Error extracting text from page ${i}:`, pageError);
+                            text += `[Page ${i} - Text extraction failed]\n\n`;
+                        }
+                    }
+                } catch (pdfjsError) {
+                    console.warn('PDF.js loading failed, using fallback text extraction:', pdfjsError);
+                    
+                    // Fallback: Try to extract text from binary data
+                    text = extractTextFromBinary(state.pdfData);
+                    numPages = 1; // Assume 1 page for fallback
+                    
+                    showAlert('PDF loaded in text-only mode (preview not available)', 'warning');
+                }
+                
+                state.originalContent = text;
+                state.currentContent = text;
+                
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileType').textContent = 'PDF';
+                document.getElementById('fileSize').textContent = formatSize(file.size);
+                document.getElementById('copyBtn').style.display = 'none';
+                document.getElementById('pdfEditOptions').classList.remove('hidden');
+                
+                // Set PDF mode based on what worked
+                const pdfModeRadio = document.querySelector(`input[name="pdfMode"][value="${state.pdfDoc ? 'full' : 'text'}"]`);
+                if (pdfModeRadio) {
+                    pdfModeRadio.checked = true;
+                    state.pdfMode = state.pdfDoc ? 'full' : 'text';
+                }
+                
+                resetHistory();
+                addToHistory('PDF loaded');
+                setupPDFTabs();
+                showEditor();
+                
+                const message = state.pdfDoc 
+                    ? `PDF loaded! ${numPages} pages available`
+                    : 'PDF loaded in text-only mode';
+                showAlert(message, 'success');
+                
+            } catch (error) {
+                console.error('PDF handling error:', error);
+                throw new Error(`Failed to process PDF: ${error.message}`);
+            }
+        }
+
+        function extractTextFromBinary(data) {
+            // Simple text extraction from binary PDF data
             let text = '';
-            for (let i = 1; i <= state.pdfDoc.numPages; i++) {
-                const page = await state.pdfDoc.getPage(i);
-                const content = await page.getTextContent();
-                text += content.items.map(item => item.str).join(' ') + '\n\n';
+            const decoder = new TextDecoder('utf-8', { fatal: false });
+            
+            // Convert chunks to text
+            const chunkSize = 4096;
+            for (let i = 0; i < data.length; i += chunkSize) {
+                const chunk = data.slice(i, i + chunkSize);
+                const chunkText = decoder.decode(chunk);
+                
+                // Extract text between parentheses (common in PDFs)
+                const matches = chunkText.match(/\(([^)]+)\)/g);
+                if (matches) {
+                    matches.forEach(match => {
+                        text += match.slice(1, -1) + ' ';
+                    });
+                }
+                
+                // Also look for plain text words
+                const words = chunkText.match(/[a-zA-Z0-9.,!?;:'"\s]{4,}/g);
+                if (words) {
+                    text += words.join(' ') + ' ';
+                }
             }
             
-            state.originalContent = text;
-            state.currentContent = text;
+            return text || 'No text could be extracted from the PDF.';
+        }
+
+        async function reprocessPdf() {
+            if (!state.pdfData) {
+                showAlert('No PDF data to reprocess', 'error');
+                return;
+            }
             
-            document.getElementById('fileName').textContent = file.name;
-            document.getElementById('fileType').textContent = 'PDF';
-            document.getElementById('fileSize').textContent = formatSize(file.size);
-            document.getElementById('copyBtn').style.display = 'none';
-            document.getElementById('pdfEditOptions').classList.remove('hidden');
-            
-            resetHistory();
-            addToHistory('PDF loaded');
-            setupPDFTabs();
-            showEditor();
-            showAlert(`PDF loaded! ${state.pdfDoc.numPages} pages ready for editing`, 'success');
+            showProgress(50);
+            try {
+                if (state.pdfMode === 'full') {
+                    // Try to reload with pdf.js
+                    const loadingTask = pdfjsLib.getDocument({ 
+                        data: state.pdfData,
+                        disableAutoFetch: true,
+                        disableStream: true
+                    });
+                    state.pdfDoc = await loadingTask.promise;
+                    showAlert(`PDF reloaded successfully! ${state.pdfDoc.numPages} pages`, 'success');
+                } else {
+                    // Text-only mode
+                    state.pdfDoc = null;
+                    showAlert('Switched to text-only mode', 'info');
+                }
+                
+                // Refresh the view
+                if (document.querySelector('.tab.active[data-tab="preview"]')) {
+                    await showPDFPreview();
+                }
+                
+                showProgress(100);
+                setTimeout(() => {
+                    document.getElementById('uploadProgress').style.width = '0%';
+                }, 500);
+            } catch (error) {
+                showAlert(`Failed to reprocess PDF: ${error.message}`, 'error');
+                showProgress(0);
+            }
         }
 
         function setupHTMLTabs() {
@@ -848,21 +1037,33 @@
 
         function setupPDFTabs() {
             const tabs = document.getElementById('tabs');
-            tabs.innerHTML = `
-                <button class="tab active" data-tab="edit">
-                    <i class="fas fa-edit"></i> Edit Text
-                </button>
-                <button class="tab" data-tab="preview">
-                    <i class="fas fa-file-pdf"></i> View PDF
-                </button>
-                <button class="tab" data-tab="annotate">
-                    <i class="fas fa-draw-polygon"></i> Annotate
-                </button>
-            `;
+            
+            if (state.pdfDoc) {
+                tabs.innerHTML = `
+                    <button class="tab active" data-tab="edit">
+                        <i class="fas fa-edit"></i> Edit Text
+                    </button>
+                    <button class="tab" data-tab="preview">
+                        <i class="fas fa-file-pdf"></i> View PDF
+                    </button>
+                    <button class="tab" data-tab="annotate">
+                        <i class="fas fa-draw-polygon"></i> Annotate
+                    </button>
+                `;
+            } else {
+                tabs.innerHTML = `
+                    <button class="tab active" data-tab="edit">
+                        <i class="fas fa-edit"></i> Edit Text
+                    </button>
+                    <button class="tab" data-tab="info" disabled title="PDF preview not available">
+                        <i class="fas fa-eye-slash"></i> Preview (N/A)
+                    </button>
+                `;
+            }
             
             setupToolbar('pdf');
             
-            tabs.querySelectorAll('.tab').forEach(tab => {
+            tabs.querySelectorAll('.tab:not([disabled])').forEach(tab => {
                 tab.addEventListener('click', () => {
                     tabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
@@ -899,13 +1100,21 @@
                     <button onclick="insertTag('<img src=\"\" alt=\"\">', '')"><i class="fas fa-image"></i> Image</button>
                 `;
             } else {
-                toolbar.innerHTML = `
-                    <button onclick="highlightText()" title="Highlight selected text"><i class="fas fa-highlighter"></i></button>
-                    <button onclick="addComment()" title="Add comment"><i class="fas fa-comment"></i></button>
-                    <button onclick="drawRectangle()" title="Draw rectangle"><i class="fas fa-square"></i></button>
-                    <button onclick="drawCircle()" title="Draw circle"><i class="fas fa-circle"></i></button>
-                    <button onclick="addStamp()" title="Add stamp"><i class="fas fa-stamp"></i></button>
-                `;
+                if (state.pdfDoc) {
+                    toolbar.innerHTML = `
+                        <button onclick="highlightText()" title="Highlight selected text"><i class="fas fa-highlighter"></i></button>
+                        <button onclick="addComment()" title="Add comment"><i class="fas fa-comment"></i></button>
+                        <button onclick="drawRectangle()" title="Draw rectangle"><i class="fas fa-square"></i></button>
+                        <button onclick="drawCircle()" title="Draw circle"><i class="fas fa-circle"></i></button>
+                        <button onclick="addStamp()" title="Add stamp"><i class="fas fa-stamp"></i></button>
+                    `;
+                } else {
+                    toolbar.innerHTML = `
+                        <button disabled title="PDF tools not available"><i class="fas fa-highlighter"></i></button>
+                        <button disabled title="PDF tools not available"><i class="fas fa-comment"></i></button>
+                        <span style="color: #6b7280; font-size: 14px; padding: 10px;">PDF preview not available - text editing only</span>
+                    `;
+                }
             }
         }
 
@@ -971,43 +1180,76 @@
                     state.isPdfModified = true;
                 }
             });
+            
+            editor.focus();
         }
 
         async function showPDFPreview() {
+            if (!state.pdfDoc) {
+                const content = document.getElementById('contentArea');
+                content.innerHTML = `
+                    <div style="text-align: center; padding: 50px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #f59e0b; margin-bottom: 20px;"></i>
+                        <h3 style="color: #92400e; margin-bottom: 10px;">PDF Preview Not Available</h3>
+                        <p style="color: #6b7280; margin-bottom: 20px;">The PDF could not be loaded for preview. You can still edit the extracted text.</p>
+                        <button onclick="reprocessPdf()" class="warning">
+                            <i class="fas fa-redo"></i> Try Reloading PDF
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
             const content = document.getElementById('contentArea');
             content.innerHTML = '<div class="pdf-preview" id="pdfPreview"></div>';
             const container = document.getElementById('pdfPreview');
             container.innerHTML = '';
             
-            for (let i = 1; i <= state.pdfDoc.numPages; i++) {
-                const page = await state.pdfDoc.getPage(i);
-                const viewport = page.getViewport({scale: 1.2});
-                
-                const pageDiv = document.createElement('div');
-                pageDiv.className = 'pdf-page';
-                pageDiv.dataset.page = i;
-                
-                const pageNumber = document.createElement('div');
-                pageNumber.className = 'page-number';
-                pageNumber.textContent = `Page ${i}`;
-                pageDiv.appendChild(pageNumber);
-                
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-                
-                await page.render({
-                    canvasContext: context,
-                    viewport: viewport
-                }).promise;
-                
-                pageDiv.appendChild(canvas);
-                container.appendChild(pageDiv);
+            try {
+                for (let i = 1; i <= state.pdfDoc.numPages; i++) {
+                    const page = await state.pdfDoc.getPage(i);
+                    const viewport = page.getViewport({scale: 1.2});
+                    
+                    const pageDiv = document.createElement('div');
+                    pageDiv.className = 'pdf-page';
+                    pageDiv.dataset.page = i;
+                    
+                    const pageNumber = document.createElement('div');
+                    pageNumber.className = 'page-number';
+                    pageNumber.textContent = `Page ${i}`;
+                    pageDiv.appendChild(pageNumber);
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+                    
+                    pageDiv.appendChild(canvas);
+                    container.appendChild(pageDiv);
+                }
+            } catch (error) {
+                console.error('Error rendering PDF:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 50px; color: #dc2626;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 48px; margin-bottom: 20px;"></i>
+                        <h3>Error rendering PDF preview</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
             }
         }
 
         function showPDFAnnotation() {
+            if (!state.pdfDoc) {
+                showAlert('PDF preview not available for annotation', 'error');
+                return;
+            }
+            
             showPDFPreview().then(() => {
                 const pages = document.querySelectorAll('.pdf-page');
                 pages.forEach(page => {
@@ -1274,7 +1516,7 @@
         // PDF editing functions
         async function addTextToPdf() {
             if (!state.pdfLibDoc) {
-                showAlert('PDF not loaded properly', 'error');
+                showAlert('PDF editing not available for this file', 'error');
                 return;
             }
             
@@ -1303,7 +1545,6 @@
 
         async function addImageToPdf() {
             showAlert('Image upload coming soon!', 'info');
-            // Implement image upload and embedding
         }
 
         async function savePdfEdits() {
@@ -1313,10 +1554,28 @@
             }
             
             try {
-                // Save annotations as overlay (for demo)
-                // In a real app, you'd embed these into the PDF
+                let pdfBytes;
                 
-                const pdfBytes = await state.pdfLibDoc.save();
+                if (state.pdfLibDoc) {
+                    // Save actual PDF edits
+                    pdfBytes = await state.pdfLibDoc.save();
+                } else {
+                    // Create a new PDF with the edited text
+                    const newPdfDoc = await PDFLib.PDFDocument.create();
+                    const page = newPdfDoc.addPage([600, 800]);
+                    
+                    // Add the edited text
+                    page.drawText(state.currentContent, {
+                        x: 50,
+                        y: 750,
+                        size: 12,
+                        maxWidth: 500,
+                        lineHeight: 18,
+                    });
+                    
+                    pdfBytes = await newPdfDoc.save();
+                }
+                
                 const blob = new Blob([pdfBytes], {type: 'application/pdf'});
                 download(blob, state.fileName.replace('.pdf', '_edited.pdf'));
                 
