@@ -410,13 +410,43 @@
             padding: 2rem;
         }
 
+        .pdf-info-banner {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.05));
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .pdf-info-banner h3 {
+            color: var(--primary);
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .pdf-info-banner p {
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .pdf-info-banner .tip {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+        }
+
         .pdf-canvas-container {
             position: relative;
             margin-bottom: 2rem;
             background: white;
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         }
 
         .pdf-page-canvas {
@@ -425,50 +455,13 @@
             height: auto;
         }
 
-        .pdf-text-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            overflow: hidden;
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .pdf-editable-field {
-            position: absolute;
-            background: rgba(99, 102, 241, 0.1);
-            border: 2px solid var(--primary);
-            padding: 0.25rem;
-            cursor: text;
-            pointer-events: auto;
-            transition: all 0.2s ease;
-        }
-
-        .pdf-editable-field:hover {
-            background: rgba(99, 102, 241, 0.2);
-        }
-
-        .pdf-editable-field input {
-            width: 100%;
-            height: 100%;
-            border: none;
-            background: transparent;
-            font-family: inherit;
-            font-size: inherit;
-            padding: 0;
-        }
-
-        .pdf-navigation {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
+        .pdf-page-label {
+            text-align: center;
             padding: 1rem;
             background: var(--bg-secondary);
-            border-radius: 8px;
-            margin-top: 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
         }
 
         /* Alerts */
@@ -550,16 +543,17 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .history-item:hover {
+            background: var(--bg-main);
         }
 
         .history-item.current {
             background: var(--primary);
             color: white;
-        }
-
-        .history-actions {
-            display: flex;
-            gap: 0.25rem;
         }
     </style>
 </head>
@@ -695,10 +689,8 @@
             history: [],
             historyIndex: -1,
             pdfDoc: null,
-            pdfPages: [],
             currentView: 'preview',
             replacementCount: 0,
-            pdfBase64: null, // Store PDF as base64 to prevent detachment
             pdfFormFields: []
         };
 
@@ -784,13 +776,12 @@
                 downloadBtn.style.display = 'flex';
                 showAlert('HTML file loaded successfully', 'success');
             } else {
-                // Store PDF as base64 string to completely avoid ArrayBuffer issues
+                // Store PDF as base64 string
                 const reader = new FileReader();
                 reader.onload = async function(e) {
                     const base64 = e.target.result.split(',')[1];
                     state.originalContent = base64;
                     state.currentContent = base64;
-                    state.pdfBase64 = base64;
                     addToHistory('Original PDF loaded');
                     await renderPDF();
                     viewTabs.style.display = 'none';
@@ -829,10 +820,10 @@
             }
         }
 
-        // Render PDF
+        // Render PDF - Clean version without text overlay
         async function renderPDF() {
             try {
-                // Convert base64 to Uint8Array for rendering
+                // Convert base64 to Uint8Array
                 const binaryString = atob(state.currentContent);
                 const bytes = new Uint8Array(binaryString.length);
                 for (let i = 0; i < binaryString.length; i++) {
@@ -845,32 +836,51 @@
                 editorContent.innerHTML = '<div class="pdf-editor" id="pdfEditor"></div>';
                 const pdfEditor = document.getElementById('pdfEditor');
 
-                // Load the PDF with pdf-lib to get form fields
+                // Check for form fields
                 try {
                     const pdfLibDoc = await PDFLib.PDFDocument.load(bytes);
                     const form = pdfLibDoc.getForm();
                     const fields = form.getFields();
                     
-                    // Store form fields info
                     state.pdfFormFields = fields.map(field => ({
                         name: field.getName(),
                         type: field.constructor.name,
                         value: field.constructor.name === 'PDFTextField' ? (field.getText() || '') : null
                     }));
                 } catch (e) {
-                    console.log('No form fields found or error reading form:', e);
+                    console.log('No form fields found:', e);
                     state.pdfFormFields = [];
                 }
 
-                // Render all pages
+                // Show info banner
+                const banner = document.createElement('div');
+                banner.className = 'pdf-info-banner';
+                if (state.pdfFormFields.length > 0) {
+                    banner.innerHTML = `
+                        <h3>📝 ${state.pdfFormFields.length} Editable Form Fields Found</h3>
+                        <p><strong>Use Find & Replace</strong> to edit the text in form fields.</p>
+                        <div class="tip">
+                            💡 <strong>Tip:</strong> PDF form fields are the only parts that can be permanently edited and saved. Regular text in PDFs cannot be modified.
+                        </div>
+                    `;
+                } else {
+                    banner.innerHTML = `
+                        <h3>📄 PDF Preview</h3>
+                        <p>This PDF contains no editable form fields. You can view it here but cannot make permanent edits.</p>
+                        <div class="tip">
+                            💡 <strong>Note:</strong> Only PDF files with form fields support Find & Replace editing. This is a limitation of the PDF format.
+                        </div>
+                    `;
+                }
+                pdfEditor.appendChild(banner);
+
+                // Render all pages cleanly
                 for (let pageNum = 1; pageNum <= state.pdfDoc.numPages; pageNum++) {
                     const page = await state.pdfDoc.getPage(pageNum);
                     const viewport = page.getViewport({ scale: 1.5 });
 
                     const container = document.createElement('div');
                     container.className = 'pdf-canvas-container';
-                    container.style.marginBottom = pageNum < state.pdfDoc.numPages ? '2rem' : '0';
-                    container.style.position = 'relative';
 
                     const canvas = document.createElement('canvas');
                     canvas.className = 'pdf-page-canvas';
@@ -879,124 +889,28 @@
                     canvas.width = viewport.width;
 
                     container.appendChild(canvas);
-                    pdfEditor.appendChild(container);
 
                     await page.render({
                         canvasContext: context,
                         viewport: viewport
                     }).promise;
 
-                    // Extract text content for editing
-                    const textContent = await page.getTextContent();
-                    const textLayer = document.createElement('div');
-                    textLayer.className = 'pdf-text-layer';
-                    textLayer.style.cssText = `
-                        position: absolute;
-                        left: 0;
-                        top: 0;
-                        right: 0;
-                        bottom: 0;
-                        overflow: hidden;
-                        opacity: 1;
-                        line-height: 1;
-                        pointer-events: auto;
-                    `;
-
-                    // Render text items
-                    textContent.items.forEach((item, index) => {
-                        const textDiv = document.createElement('div');
-                        textDiv.style.cssText = `
-                            position: absolute;
-                            left: ${item.transform[4]}px;
-                            top: ${item.transform[5]}px;
-                            font-size: ${Math.abs(item.transform[0])}px;
-                            font-family: sans-serif;
-                            white-space: pre;
-                            cursor: text;
-                            padding: 2px;
-                            background: rgba(99, 102, 241, 0.05);
-                            border: 1px solid transparent;
-                            transition: all 0.2s ease;
-                        `;
-                        textDiv.textContent = item.str;
-                        textDiv.dataset.pageNum = pageNum;
-                        textDiv.dataset.itemIndex = index;
-                        
-                        textDiv.addEventListener('mouseenter', function() {
-                            this.style.background = 'rgba(99, 102, 241, 0.15)';
-                            this.style.border = '1px dashed var(--primary)';
-                        });
-                        
-                        textDiv.addEventListener('mouseleave', function() {
-                            this.style.background = 'rgba(99, 102, 241, 0.05)';
-                            this.style.border = '1px solid transparent';
-                        });
-                        
-                        // Make text editable on click
-                        textDiv.addEventListener('click', function() {
-                            const currentText = this.textContent;
-                            const input = document.createElement('input');
-                            input.type = 'text';
-                            input.value = currentText;
-                            input.style.cssText = this.style.cssText + 'border: 2px solid var(--primary); background: white; z-index: 100; outline: none;';
-                            
-                            input.addEventListener('blur', () => {
-                                textDiv.textContent = input.value;
-                                this.parentNode.replaceChild(textDiv, input);
-                            });
-                            
-                            input.addEventListener('keydown', (e) => {
-                                if (e.key === 'Enter') {
-                                    input.blur();
-                                } else if (e.key === 'Escape') {
-                                    textDiv.textContent = currentText;
-                                    this.parentNode.replaceChild(textDiv, input);
-                                }
-                            });
-                            
-                            this.parentNode.replaceChild(input, this);
-                            input.focus();
-                            input.select();
-                        });
-                        
-                        textLayer.appendChild(textDiv);
-                    });
-
-                    container.appendChild(textLayer);
-
-                    // Add page number
                     const pageLabel = document.createElement('div');
-                    pageLabel.style.cssText = 'text-align: center; color: var(--text-secondary); padding: 0.5rem; font-size: 0.875rem;';
-                    pageLabel.textContent = `Page ${pageNum} of ${state.pdfDoc.numPages}`;
+                    pageLabel.className = 'pdf-page-label';
+                    pageLabel.innerHTML = `Page ${pageNum} <span style="font-weight: 400;">of ${state.pdfDoc.numPages}</span>`;
                     container.appendChild(pageLabel);
-                }
 
-                // Show form fields info if available
-                if (state.pdfFormFields && state.pdfFormFields.length > 0) {
-                    const fieldsInfo = document.createElement('div');
-                    fieldsInfo.style.cssText = 'background: var(--bg-secondary); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;';
-                    fieldsInfo.innerHTML = `
-                        <h3 style="margin-bottom: 0.5rem; color: var(--primary);">📝 Editable Form Fields Found: ${state.pdfFormFields.length}</h3>
-                        <p style="font-size: 0.875rem; color: var(--text-secondary);">Click on any text to edit it directly, or use Find & Replace to edit form field values.</p>
-                    `;
-                    pdfEditor.insertBefore(fieldsInfo, pdfEditor.firstChild);
-                } else {
-                    const fieldsInfo = document.createElement('div');
-                    fieldsInfo.style.cssText = 'background: var(--bg-secondary); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;';
-                    fieldsInfo.innerHTML = `
-                        <h3 style="margin-bottom: 0.5rem; color: var(--primary);">✏️ Click to Edit Text</h3>
-                        <p style="font-size: 0.875rem; color: var(--text-secondary);">Click on any text in the PDF to edit it directly. Note: Changes are visual only and won't modify the actual PDF structure.</p>
-                    `;
-                    pdfEditor.insertBefore(fieldsInfo, pdfEditor.firstChild);
+                    pdfEditor.appendChild(container);
                 }
 
             } catch (error) {
                 console.error('Error rendering PDF:', error);
                 editorContent.innerHTML = `
-                    <div style="padding: 2rem; text-align: center; color: var(--danger);">
-                        <h3>Error Loading PDF</h3>
-                        <p>${error.message}</p>
-                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-secondary);">Please try uploading a different PDF file.</p>
+                    <div style="padding: 4rem 2rem; text-align: center;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+                        <h3 style="color: var(--danger); margin-bottom: 1rem;">Error Loading PDF</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">${error.message}</p>
+                        <p style="font-size: 0.875rem; color: var(--text-secondary);">Please try uploading a different PDF file.</p>
                     </div>
                 `;
                 showAlert('Error loading PDF: ' + error.message, 'error');
@@ -1097,7 +1011,11 @@
                 });
 
                 if (count === 0) {
-                    showAlert('No editable form fields found with that text. Try clicking on text directly to edit it.', 'info');
+                    if (state.pdfFormFields.length === 0) {
+                        showAlert('This PDF has no editable form fields. Cannot perform find & replace.', 'info');
+                    } else {
+                        showAlert('No matches found in form fields.', 'info');
+                    }
                     return;
                 }
 
@@ -1140,14 +1058,13 @@
         });
 
         function addToHistory(action) {
-            // Remove future history if we're not at the end
             if (state.historyIndex < state.history.length - 1) {
                 state.history = state.history.slice(0, state.historyIndex + 1);
             }
 
             state.history.push({
                 action: action,
-                content: state.currentContent, // Store as-is (string for both HTML and PDF base64)
+                content: state.currentContent,
                 replacementCount: state.replacementCount,
                 timestamp: new Date().toLocaleTimeString()
             });
@@ -1233,7 +1150,6 @@
                 const blob = new Blob([state.currentContent], { type: 'text/html' });
                 downloadFile(blob, state.file.name.replace(/\.(html|htm)$/, '_edited.html'));
             } else {
-                // Convert base64 to blob
                 const binaryString = atob(state.currentContent);
                 const bytes = new Uint8Array(binaryString.length);
                 for (let i = 0; i < binaryString.length; i++) {
