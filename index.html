@@ -3,524 +3,502 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Editor - HTML & PDF</title>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <title>ProEdit - Professional Document Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         :root {
-            --primary: #0066FF;
-            --primary-dark: #0052CC;
-            --success: #00C48C;
-            --danger: #FF3B3B;
-            --warning: #FFAB00;
-            --bg-main: #0A0E17;
-            --bg-card: #141922;
-            --bg-input: #1E2530;
-            --text-primary: #E8EAED;
-            --text-secondary: #9BA3AF;
-            --border: #2A3441;
-            --shadow: rgba(0, 102, 255, 0.2);
+            --primary: #6366F1;
+            --primary-dark: #4F46E5;
+            --secondary: #EC4899;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --bg-main: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --bg-secondary: #F1F5F9;
+            --text-primary: #0F172A;
+            --text-secondary: #64748B;
+            --border: #E2E8F0;
+            --shadow: 0 10px 40px rgba(99, 102, 241, 0.1);
+            --shadow-lg: 0 20px 60px rgba(99, 102, 241, 0.15);
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Lexend', sans-serif;
+            font-family: 'Outfit', sans-serif;
             background: var(--bg-main);
             color: var(--text-primary);
-            min-height: 100vh;
-            padding: 2rem;
             line-height: 1.6;
         }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            animation: fadeIn 0.6s ease-out;
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            height: 100vh;
+            overflow: hidden;
         }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
         }
-        
-        header {
-            text-align: center;
-            margin-bottom: 3rem;
-            animation: slideDown 0.8s ease-out;
+
+        .logo {
+            padding: 2rem;
+            border-bottom: 1px solid var(--border);
         }
-        
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        h1 {
-            font-size: clamp(2rem, 5vw, 3.5rem);
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary), #00C48C);
+
+        .logo h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.02em;
         }
-        
-        .subtitle {
+
+        .logo p {
             color: var(--text-secondary);
-            font-size: 1.1rem;
-            font-weight: 300;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
         }
-        
-        .card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            border: 1px solid var(--border);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
+
+        .upload-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
         }
-        
-        .card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 10px 40px var(--shadow);
-        }
-        
-        .card h2 {
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .icon {
-            width: 28px;
-            height: 28px;
-            display: inline-block;
-        }
-        
+
         .upload-area {
             border: 2px dashed var(--border);
             border-radius: 12px;
-            padding: 3rem;
+            padding: 2rem 1rem;
             text-align: center;
-            transition: all 0.3s ease;
             cursor: pointer;
-            background: var(--bg-input);
-            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+            background: var(--bg-secondary);
         }
-        
+
         .upload-area:hover {
             border-color: var(--primary);
-            background: rgba(0, 102, 255, 0.05);
+            background: rgba(99, 102, 241, 0.05);
         }
-        
+
         .upload-area.dragover {
             border-color: var(--success);
-            background: rgba(0, 196, 140, 0.1);
+            background: rgba(16, 185, 129, 0.1);
         }
-        
+
         .upload-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
         }
-        
+
         input[type="file"] {
             display: none;
         }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-            animation: slideUp 0.5s ease-out backwards;
+
+        .file-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            display: none;
         }
-        
-        .form-group:nth-child(2) {
-            animation-delay: 0.1s;
-        }
-        
-        .form-group:nth-child(3) {
-            animation-delay: 0.2s;
-        }
-        
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        label {
+
+        .file-info.active {
             display: block;
-            margin-bottom: 0.5rem;
+        }
+
+        .file-name {
             font-weight: 600;
+            color: var(--primary);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.875rem;
+            word-break: break-all;
+        }
+
+        .file-meta {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
             color: var(--text-secondary);
-            font-size: 0.9rem;
+        }
+
+        .controls-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 0.875rem;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
         }
-        
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
         input[type="text"],
         textarea {
             width: 100%;
-            padding: 1rem 1.25rem;
-            background: var(--bg-input);
+            padding: 0.75rem;
+            background: var(--bg-secondary);
             border: 2px solid var(--border);
-            border-radius: 10px;
-            color: var(--text-primary);
-            font-size: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            transition: all 0.3s ease;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-family: 'Space Mono', monospace;
+            transition: all 0.2s ease;
         }
-        
+
         input[type="text"]:focus,
         textarea:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--shadow);
+            background: var(--bg-card);
         }
-        
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-            font-family: 'Lexend', sans-serif;
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
-        
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
         .button-group {
             display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-top: 2rem;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
         }
-        
+
         button {
-            flex: 1;
-            min-width: 200px;
-            padding: 1rem 2rem;
+            padding: 0.875rem 1.25rem;
             border: none;
-            border-radius: 10px;
-            font-size: 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Lexend', sans-serif;
-            position: relative;
-            overflow: hidden;
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
-        
-        button::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
-        
-        button:active::before {
-            width: 300px;
-            height: 300px;
-        }
-        
+
         .btn-primary {
             background: var(--primary);
             color: white;
         }
-        
-        .btn-primary:hover {
+
+        .btn-primary:hover:not(:disabled) {
             background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px var(--shadow);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
         }
-        
+
         .btn-secondary {
-            background: var(--bg-input);
+            background: var(--bg-secondary);
             color: var(--text-primary);
             border: 2px solid var(--border);
         }
-        
-        .btn-secondary:hover {
+
+        .btn-secondary:hover:not(:disabled) {
             background: var(--bg-card);
             border-color: var(--text-secondary);
         }
-        
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-        
-        .file-info {
-            background: var(--bg-input);
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            animation: scaleIn 0.4s ease-out;
-        }
-        
-        @keyframes scaleIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-        
-        .file-name {
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--primary);
-            font-weight: 600;
-        }
-        
-        .file-type {
-            background: var(--primary);
+
+        .btn-success {
+            background: var(--success);
             color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
         }
-        
-        .alert {
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            animation: slideDown 0.4s ease-out;
+
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+            transform: translateY(-1px);
         }
-        
-        .alert-success {
-            background: rgba(0, 196, 140, 0.1);
-            border-left: 4px solid var(--success);
-            color: var(--success);
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
         }
-        
-        .alert-error {
-            background: rgba(255, 59, 59, 0.1);
-            border-left: 4px solid var(--danger);
-            color: var(--danger);
+
+        .btn-warning:hover:not(:disabled) {
+            background: #D97706;
+            transform: translateY(-1px);
         }
-        
-        .alert-info {
-            background: rgba(0, 102, 255, 0.1);
-            border-left: 4px solid var(--primary);
-            color: var(--primary);
+
+        .btn-icon {
+            background: transparent;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
         }
-        
-        .progress-bar {
-            width: 100%;
-            height: 4px;
-            background: var(--bg-input);
-            border-radius: 2px;
-            overflow: hidden;
-            margin-top: 1rem;
+
+        .btn-icon:hover:not(:disabled) {
+            background: var(--bg-secondary);
         }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--success));
-            width: 0%;
-            transition: width 0.3s ease;
-            animation: shimmer 2s infinite;
-        }
-        
-        @keyframes shimmer {
-            0% {
-                background-position: -1000px 0;
-            }
-            100% {
-                background-position: 1000px 0;
-            }
-        }
-        
+
         .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
         }
-        
+
         .stat-item {
-            background: var(--bg-input);
-            padding: 1rem;
-            border-radius: 10px;
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
         }
-        
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
         .stat-value {
-            font-size: 2rem;
             font-weight: 700;
             color: var(--primary);
-            display: block;
+            font-size: 1.125rem;
         }
-        
-        .stat-label {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .preview-container {
-            margin-top: 2rem;
-            animation: slideUp 0.5s ease-out;
-        }
-        
-        .preview-header {
+
+        /* Main Content */
+        .main-content {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
+            flex-direction: column;
+            overflow: hidden;
         }
-        
-        .preview-tabs {
+
+        .toolbar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-group {
             display: flex;
             gap: 0.5rem;
+            align-items: center;
+            padding-right: 0.75rem;
+            border-right: 1px solid var(--border);
         }
-        
-        .preview-tab {
+
+        .toolbar-group:last-child {
+            border-right: none;
+            margin-left: auto;
+        }
+
+        .view-tabs {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .view-tab {
             padding: 0.5rem 1rem;
-            background: var(--bg-input);
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-secondary);
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.875rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-            font-weight: 600;
+            transition: all 0.2s ease;
         }
-        
-        .preview-tab.active {
+
+        .view-tab.active {
             background: var(--primary);
             color: white;
             border-color: var(--primary);
         }
-        
-        .preview-box {
-            background: white;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            padding: 2rem;
-            min-height: 400px;
-            max-height: 600px;
+
+        .editor-container {
+            flex: 1;
             overflow: auto;
-            position: relative;
+            padding: 2rem;
+            background: var(--bg-secondary);
         }
-        
-        .preview-box.code-view {
-            background: var(--bg-input);
-            color: var(--text-primary);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            word-break: break-all;
+
+        .editor-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            min-height: 600px;
         }
-        
-        .preview-box iframe {
+
+        /* HTML Editor */
+        .html-preview {
+            padding: 2rem;
+        }
+
+        .html-preview iframe {
             width: 100%;
-            height: 100%;
+            min-height: 600px;
             border: none;
-            min-height: 400px;
+            border-radius: 8px;
+            background: white;
         }
-        
-        .preview-label {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: var(--bg-main);
-            color: var(--text-secondary);
-            padding: 0.25rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
+
+        .html-code-editor {
+            padding: 0;
         }
-        
-        .pdf-preview {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+
+        .code-editor-textarea {
+            width: 100%;
+            min-height: 600px;
+            padding: 2rem;
+            background: #1E293B;
+            color: #E2E8F0;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.8;
+            resize: vertical;
         }
-        
-        .pdf-page {
+
+        .code-editor-textarea:focus {
+            outline: 2px solid var(--primary);
+        }
+
+        /* PDF Editor */
+        .pdf-editor {
+            padding: 2rem;
+        }
+
+        .pdf-canvas-container {
+            position: relative;
+            margin-bottom: 2rem;
+            background: white;
             border: 1px solid var(--border);
             border-radius: 8px;
             overflow: hidden;
         }
-        
-        .pdf-page canvas {
+
+        .pdf-page-canvas {
+            display: block;
             width: 100%;
             height: auto;
-            display: block;
         }
-        
-        .btn-copy {
-            background: var(--success);
-            color: white;
+
+        .pdf-text-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            opacity: 0.9;
+            pointer-events: none;
         }
-        
-        .btn-copy:hover {
-            background: #00A872;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 196, 140, 0.3);
+
+        .pdf-editable-field {
+            position: absolute;
+            background: rgba(99, 102, 241, 0.1);
+            border: 2px solid var(--primary);
+            padding: 0.25rem;
+            cursor: text;
+            pointer-events: auto;
+            transition: all 0.2s ease;
         }
-        
-        .btn-download {
-            background: var(--warning);
-            color: var(--bg-main);
+
+        .pdf-editable-field:hover {
+            background: rgba(99, 102, 241, 0.2);
         }
-        
-        .btn-download:hover {
-            background: #E69B00;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 171, 0, 0.3);
+
+        .pdf-editable-field input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            padding: 0;
         }
-        
-        .copied-notification {
+
+        .pdf-navigation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        /* Alerts */
+        .alert {
             position: fixed;
             top: 2rem;
             right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            animation: slideInRight 0.3s ease-out;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .alert-success {
             background: var(--success);
             color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0, 196, 140, 0.3);
-            animation: slideInRight 0.4s ease-out;
-            z-index: 1000;
         }
-        
+
+        .alert-error {
+            background: var(--danger);
+            color: white;
+        }
+
+        .alert-info {
+            background: var(--primary);
+            color: white;
+        }
+
         @keyframes slideInRight {
             from {
                 opacity: 0;
@@ -531,199 +509,222 @@
                 transform: translateX(0);
             }
         }
-        
-        .highlight {
-            background: rgba(0, 196, 140, 0.2);
-            padding: 0.1rem 0.2rem;
-            border-radius: 3px;
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
         }
-        
-        footer {
-            text-align: center;
-            margin-top: 4rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        
-        @media (max-width: 768px) {
-            body {
-                padding: 1rem;
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1fr;
             }
-            
-            .card {
-                padding: 1.5rem;
+
+            .sidebar {
+                display: none;
             }
-            
-            .button-group {
-                flex-direction: column;
-            }
-            
-            button {
-                min-width: 100%;
-            }
-            
-            .preview-tabs {
-                flex-wrap: wrap;
-            }
-            
-            .preview-tab {
-                flex: 1;
-                min-width: 100px;
-            }
+        }
+
+        /* History Panel */
+        .history-section {
+            padding: 1.5rem;
+        }
+
+        .history-item {
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-item.current {
+            background: var(--primary);
+            color: white;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 0.25rem;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Document Editor</h1>
-            <p class="subtitle">Find and replace text in HTML and PDF files</p>
-        </header>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>ProEdit</h1>
+                <p>Professional Document Editor</p>
+            </div>
 
-        <div class="card">
-            <h2>
-                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" />
-                </svg>
-                Upload File
-            </h2>
-            
-            <div class="upload-area" id="uploadArea">
-                <div class="upload-icon">📄</div>
-                <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">
-                    <strong>Drop your file here</strong> or click to browse
-                </p>
-                <p style="color: var(--text-secondary); font-size: 0.9rem;">
-                    Supports HTML and PDF files
-                </p>
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <p style="font-weight: 600; margin-bottom: 0.25rem;">Upload Document</p>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary);">HTML or PDF</p>
+                </div>
                 <input type="file" id="fileInput" accept=".html,.htm,.pdf">
-            </div>
-            
-            <div id="fileInfoContainer"></div>
-        </div>
-
-        <div class="card" id="editorCard" style="display: none;">
-            <h2>
-                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
-                </svg>
-                Find & Replace
-            </h2>
-            
-            <div id="alertContainer"></div>
-            
-            <div class="form-group">
-                <label for="findText">Text to Find</label>
-                <input type="text" id="findText" placeholder="e.g., NATIONS" autocomplete="off">
-            </div>
-            
-            <div class="form-group">
-                <label for="replaceText">Replace With</label>
-                <input type="text" id="replaceText" placeholder="e.g., NATIONAL" autocomplete="off">
-            </div>
-            
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" id="caseSensitive" style="width: auto; display: inline; margin-right: 0.5rem;">
-                    Case Sensitive
-                </label>
-                <label>
-                    <input type="checkbox" id="wholeWord" style="width: auto; display: inline; margin-right: 0.5rem;">
-                    Match Whole Words Only
-                </label>
-            </div>
-            
-            <div class="button-group">
-                <button class="btn-primary" id="makeChangesBtn">
-                    <span>Make Changes</span>
-                </button>
-                <button class="btn-secondary" id="resetBtn">
-                    <span>Reset</span>
-                </button>
-            </div>
-            
-            <div id="statsContainer"></div>
-        </div>
-
-        <div class="card" id="previewCard" style="display: none;">
-            <h2>
-                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
-                </svg>
-                Preview
-            </h2>
-            
-            <div class="preview-container">
-                <div class="preview-header">
-                    <div class="preview-tabs">
-                        <button class="preview-tab active" data-view="original" id="originalTab">
-                            Original
-                        </button>
-                        <button class="preview-tab" data-view="edited" id="editedTab" style="display: none;">
-                            After Changes
-                        </button>
-                        <button class="preview-tab" data-view="code" id="codeTab">
-                            HTML Code
-                        </button>
-                    </div>
-                    <div class="button-group" style="margin: 0; gap: 0.5rem;">
-                        <button class="btn-copy" id="copyHtmlBtn" style="min-width: auto; padding: 0.5rem 1rem; display: none;">
-                            📋 Copy HTML
-                        </button>
-                        <button class="btn-download" id="downloadPdfBtn" style="min-width: auto; padding: 0.5rem 1rem; display: none;">
-                            ⬇️ Download PDF
-                        </button>
+                <div class="file-info" id="fileInfo">
+                    <div class="file-name" id="fileName"></div>
+                    <div class="file-meta">
+                        <span id="fileSize"></span>
+                        <span>•</span>
+                        <span id="fileType"></span>
                     </div>
                 </div>
-                
-                <div class="preview-box" id="previewBox">
-                    <span class="preview-label">Preview</span>
-                    <div id="previewContent"></div>
+            </div>
+
+            <div class="controls-section" id="findReplaceSection" style="display: none;">
+                <div class="section-title">Find & Replace</div>
+                <div class="form-group">
+                    <label>Find Text</label>
+                    <input type="text" id="findText" placeholder="Search...">
+                </div>
+                <div class="form-group">
+                    <label>Replace With</label>
+                    <input type="text" id="replaceText" placeholder="Replace with...">
+                </div>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="caseSensitive">
+                        <span>Case Sensitive</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="wholeWord">
+                        <span>Whole Words Only</span>
+                    </label>
+                </div>
+                <div class="button-group">
+                    <button class="btn-primary" id="replaceBtn">
+                        🔄 Replace All
+                    </button>
+                    <button class="btn-secondary" id="clearBtn">
+                        ✖️ Clear Fields
+                    </button>
                 </div>
             </div>
-        </div>
+
+            <div class="stats" id="statsSection" style="display: none;">
+                <div class="section-title">Statistics</div>
+                <div class="stat-item">
+                    <span class="stat-label">Replacements</span>
+                    <span class="stat-value" id="replacementCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">File Size</span>
+                    <span class="stat-value" id="fileSizeStat">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Status</span>
+                    <span class="stat-value" id="statusStat">Ready</span>
+                </div>
+            </div>
+
+            <div class="history-section" id="historySection" style="display: none;">
+                <div class="section-title">History</div>
+                <div id="historyList"></div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <button class="btn-icon" id="undoBtn" title="Undo" disabled>
+                        ↶
+                    </button>
+                    <button class="btn-icon" id="redoBtn" title="Redo" disabled>
+                        ↷
+                    </button>
+                </div>
+
+                <div class="toolbar-group view-tabs" id="viewTabs" style="display: none;">
+                    <button class="view-tab active" data-view="preview">Preview</button>
+                    <button class="view-tab" data-view="code">Code</button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="btn-success" id="copyHtmlBtn" style="display: none;">
+                        📋 Copy HTML
+                    </button>
+                    <button class="btn-success" id="downloadBtn" style="display: none;">
+                        ⬇️ Download
+                    </button>
+                </div>
+            </div>
+
+            <div class="editor-container">
+                <div class="editor-content" id="editorContent">
+                    <div style="display: flex; align-items: center; justify-content: center; min-height: 600px; color: var(--text-secondary);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 4rem; margin-bottom: 1rem;">📄</div>
+                            <h2 style="margin-bottom: 0.5rem;">No Document Loaded</h2>
+                            <p>Upload an HTML or PDF file to get started</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <footer>
-        <p>Built for Vercel deployment • Supports HTML & PDF files</p>
-    </footer>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
         // Set PDF.js worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        
-        let currentFile = null;
-        let currentFileType = null;
-        let currentContent = null;
-        let modifiedContent = null;
-        let replacementsMade = 0;
-        let currentView = 'original';
-        let pdfDocument = null;
 
+        // State management
+        const state = {
+            file: null,
+            fileType: null,
+            originalContent: null,
+            currentContent: null,
+            history: [],
+            historyIndex: -1,
+            pdfDoc: null,
+            pdfPages: [],
+            currentView: 'preview',
+            replacementCount: 0
+        };
+
+        // Elements
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
-        const editorCard = document.getElementById('editorCard');
-        const previewCard = document.getElementById('previewCard');
-        const fileInfoContainer = document.getElementById('fileInfoContainer');
-        const alertContainer = document.getElementById('alertContainer');
-        const statsContainer = document.getElementById('statsContainer');
-        const makeChangesBtn = document.getElementById('makeChangesBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const previewBox = document.getElementById('previewBox');
-        const previewContent = document.getElementById('previewContent');
-        const originalTab = document.getElementById('originalTab');
-        const editedTab = document.getElementById('editedTab');
-        const codeTab = document.getElementById('codeTab');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const fileType = document.getElementById('fileType');
+        const findReplaceSection = document.getElementById('findReplaceSection');
+        const statsSection = document.getElementById('statsSection');
+        const historySection = document.getElementById('historySection');
+        const editorContent = document.getElementById('editorContent');
+        const viewTabs = document.getElementById('viewTabs');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const replaceBtn = document.getElementById('replaceBtn');
+        const clearBtn = document.getElementById('clearBtn');
         const copyHtmlBtn = document.getElementById('copyHtmlBtn');
-        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const replacementCount = document.getElementById('replacementCount');
+        const fileSizeStat = document.getElementById('fileSizeStat');
+        const statusStat = document.getElementById('statusStat');
 
-        // Upload area click
+        // Upload handlers
         uploadArea.addEventListener('click', () => fileInput.click());
 
-        // Drag and drop
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.classList.add('dragover');
@@ -736,13 +737,11 @@
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
             }
         });
 
-        // File input change
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 handleFile(e.target.files[0]);
@@ -751,166 +750,356 @@
 
         // Handle file upload
         async function handleFile(file) {
-            currentFile = file;
-            const fileName = file.name;
-            const fileExtension = fileName.split('.').pop().toLowerCase();
-
-            if (!['html', 'htm', 'pdf'].includes(fileExtension)) {
-                showAlert('Please upload an HTML or PDF file.', 'error');
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!['html', 'htm', 'pdf'].includes(ext)) {
+                showAlert('Please upload an HTML or PDF file', 'error');
                 return;
             }
 
-            currentFileType = fileExtension === 'pdf' ? 'pdf' : 'html';
-            modifiedContent = null;
-            replacementsMade = 0;
-            
-            // Show file info
-            fileInfoContainer.innerHTML = `
-                <div class="file-info">
-                    <div>
-                        <span class="file-name">${fileName}</span>
-                        <span style="color: var(--text-secondary); font-size: 0.9rem; margin-left: 0.5rem;">
-                            ${(file.size / 1024).toFixed(2)} KB
-                        </span>
-                    </div>
-                    <span class="file-type">${currentFileType.toUpperCase()}</span>
-                </div>
-            `;
+            state.file = file;
+            state.fileType = ext === 'pdf' ? 'pdf' : 'html';
+            state.history = [];
+            state.historyIndex = -1;
+            state.replacementCount = 0;
 
-            // Read file content
-            if (currentFileType === 'html') {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    currentContent = e.target.result;
-                    editorCard.style.display = 'block';
-                    previewCard.style.display = 'block';
-                    showPreview('original');
-                    copyHtmlBtn.style.display = 'inline-block';
-                    downloadPdfBtn.style.display = 'none';
-                    editedTab.style.display = 'none';
-                    currentView = 'original';
-                    originalTab.classList.add('active');
-                    codeTab.classList.remove('active');
-                    showAlert('HTML file loaded successfully!', 'success');
-                };
-                reader.readAsText(file);
+            // Update UI
+            fileInfo.classList.add('active');
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileType.textContent = state.fileType.toUpperCase();
+            fileSizeStat.textContent = formatFileSize(file.size);
+            findReplaceSection.style.display = 'block';
+            statsSection.style.display = 'block';
+
+            if (state.fileType === 'html') {
+                const text = await file.text();
+                state.originalContent = text;
+                state.currentContent = text;
+                addToHistory('Original document loaded');
+                renderHTML();
+                viewTabs.style.display = 'flex';
+                copyHtmlBtn.style.display = 'flex';
+                downloadBtn.style.display = 'flex';
+                showAlert('HTML file loaded successfully', 'success');
             } else {
                 const arrayBuffer = await file.arrayBuffer();
-                currentContent = arrayBuffer;
-                editorCard.style.display = 'block';
-                previewCard.style.display = 'block';
-                await showPDFPreview(arrayBuffer);
+                // Clone the arrayBuffer to prevent detachment
+                state.originalContent = arrayBuffer.slice(0);
+                state.currentContent = arrayBuffer.slice(0);
+                addToHistory('Original PDF loaded');
+                await renderPDF();
+                viewTabs.style.display = 'none';
                 copyHtmlBtn.style.display = 'none';
-                downloadPdfBtn.style.display = 'inline-block';
-                editedTab.style.display = 'none';
-                codeTab.style.display = 'none';
-                currentView = 'original';
-                showAlert('PDF file loaded successfully!', 'success');
+                downloadBtn.style.display = 'flex';
+                showAlert('PDF file loaded successfully', 'success');
+            }
+
+            updateHistoryUI();
+        }
+
+        // Render HTML
+        function renderHTML() {
+            const view = state.currentView;
+            if (view === 'preview') {
+                editorContent.innerHTML = `
+                    <div class="html-preview">
+                        <iframe id="htmlPreviewFrame"></iframe>
+                    </div>
+                `;
+                const iframe = document.getElementById('htmlPreviewFrame');
+                iframe.srcdoc = state.currentContent;
+            } else {
+                editorContent.innerHTML = `
+                    <div class="html-code-editor">
+                        <textarea class="code-editor-textarea" id="codeEditor"></textarea>
+                    </div>
+                `;
+                const codeEditor = document.getElementById('codeEditor');
+                codeEditor.value = state.currentContent;
+                codeEditor.addEventListener('input', (e) => {
+                    state.currentContent = e.target.value;
+                });
             }
         }
 
-        // Make changes
-        makeChangesBtn.addEventListener('click', async () => {
+        // Render PDF
+        async function renderPDF() {
+            try {
+                const loadingTask = pdfjsLib.getDocument({data: state.currentContent});
+                state.pdfDoc = await loadingTask.promise;
+                
+                editorContent.innerHTML = '<div class="pdf-editor" id="pdfEditor"></div>';
+                const pdfEditor = document.getElementById('pdfEditor');
+
+                // Render all pages
+                for (let pageNum = 1; pageNum <= state.pdfDoc.numPages; pageNum++) {
+                    const page = await state.pdfDoc.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 1.5 });
+
+                    const container = document.createElement('div');
+                    container.className = 'pdf-canvas-container';
+                    container.style.marginBottom = pageNum < state.pdfDoc.numPages ? '2rem' : '0';
+
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'pdf-page-canvas';
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    container.appendChild(canvas);
+                    pdfEditor.appendChild(container);
+
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+
+                    // Add page number
+                    const pageLabel = document.createElement('div');
+                    pageLabel.style.cssText = 'text-align: center; color: var(--text-secondary); padding: 0.5rem; font-size: 0.875rem;';
+                    pageLabel.textContent = `Page ${pageNum} of ${state.pdfDoc.numPages}`;
+                    container.appendChild(pageLabel);
+                }
+
+            } catch (error) {
+                console.error('Error rendering PDF:', error);
+                showAlert('Error loading PDF: ' + error.message, 'error');
+            }
+        }
+
+        // Find and replace
+        replaceBtn.addEventListener('click', async () => {
             const findText = document.getElementById('findText').value;
             const replaceText = document.getElementById('replaceText').value;
 
             if (!findText) {
-                showAlert('Please enter text to find.', 'error');
+                showAlert('Please enter text to find', 'error');
                 return;
             }
 
-            if (!currentFile) {
-                showAlert('Please upload a file first.', 'error');
+            if (!state.file) {
+                showAlert('Please upload a file first', 'error');
                 return;
             }
 
-            makeChangesBtn.disabled = true;
-            makeChangesBtn.innerHTML = '<span>Processing...</span>';
+            replaceBtn.disabled = true;
+            replaceBtn.innerHTML = '<span class="spinner"></span> Processing...';
 
             try {
-                if (currentFileType === 'html') {
-                    await processHTML(findText, replaceText);
+                if (state.fileType === 'html') {
+                    await replaceInHTML(findText, replaceText);
                 } else {
-                    await processPDF(findText, replaceText);
+                    await replaceInPDF(findText, replaceText);
                 }
             } catch (error) {
-                showAlert('Error processing file: ' + error.message, 'error');
+                showAlert('Error: ' + error.message, 'error');
                 console.error(error);
             } finally {
-                makeChangesBtn.disabled = false;
-                makeChangesBtn.innerHTML = '<span>Make Changes</span>';
+                replaceBtn.disabled = false;
+                replaceBtn.innerHTML = '🔄 Replace All';
             }
         });
 
-        // Process HTML
-        async function processHTML(findText, replaceText) {
+        // Replace in HTML
+        async function replaceInHTML(findText, replaceText) {
             const caseSensitive = document.getElementById('caseSensitive').checked;
             const wholeWord = document.getElementById('wholeWord').checked;
-            
+
             let flags = caseSensitive ? 'g' : 'gi';
             let pattern = wholeWord ? `\\b${escapeRegex(findText)}\\b` : escapeRegex(findText);
             let regex = new RegExp(pattern, flags);
-            
-            const matches = currentContent.match(regex);
-            replacementsMade = matches ? matches.length : 0;
-            
-            if (replacementsMade === 0) {
-                showAlert('No matches found for "' + findText + '".', 'info');
+
+            const matches = state.currentContent.match(regex);
+            const count = matches ? matches.length : 0;
+
+            if (count === 0) {
+                showAlert('No matches found', 'info');
                 return;
             }
+
+            state.currentContent = state.currentContent.replace(regex, replaceText);
+            state.replacementCount += count;
+            addToHistory(`Replaced "${findText}" with "${replaceText}" (${count} times)`);
             
-            modifiedContent = currentContent.replace(regex, replaceText);
-            
-            // Show edited preview
-            editedTab.style.display = 'block';
-            editedTab.click();
-            
-            showStats();
-            showAlert(`Successfully replaced ${replacementsMade} occurrence(s)! Preview updated.`, 'success');
+            renderHTML();
+            updateStats();
+            updateHistoryUI();
+            showAlert(`Successfully replaced ${count} occurrence(s)`, 'success');
         }
 
-        // Process PDF
-        async function processPDF(findText, replaceText) {
+        // Replace in PDF
+        async function replaceInPDF(findText, replaceText) {
             const caseSensitive = document.getElementById('caseSensitive').checked;
             
-            const pdfDoc = await PDFLib.PDFDocument.load(currentContent);
-            const pages = pdfDoc.getPages();
-            replacementsMade = 0;
+            try {
+                // Load a fresh copy from the current state
+                const pdfDoc = await PDFLib.PDFDocument.load(state.currentContent.slice(0));
+                const form = pdfDoc.getForm();
+                const fields = form.getFields();
+                let count = 0;
 
-            // Note: PDF text replacement is limited in pdf-lib
-            // This is a basic implementation that works with form fields
-            const form = pdfDoc.getForm();
-            const fields = form.getFields();
-            
-            fields.forEach(field => {
-                if (field.constructor.name === 'PDFTextField') {
-                    const text = field.getText() || '';
-                    let pattern = caseSensitive ? findText : new RegExp(findText, 'i');
-                    if (text.includes(findText) || (typeof pattern !== 'string' && pattern.test(text))) {
-                        const newText = caseSensitive 
-                            ? text.replace(new RegExp(findText, 'g'), replaceText)
-                            : text.replace(new RegExp(findText, 'gi'), replaceText);
-                        const count = text.split(findText).length - 1;
-                        replacementsMade += count;
-                        field.setText(newText);
+                fields.forEach(field => {
+                    if (field.constructor.name === 'PDFTextField') {
+                        const text = field.getText() || '';
+                        const regex = caseSensitive 
+                            ? new RegExp(escapeRegex(findText), 'g')
+                            : new RegExp(escapeRegex(findText), 'gi');
+                        
+                        if (regex.test(text)) {
+                            const newText = text.replace(regex, replaceText);
+                            const matches = text.match(regex);
+                            count += matches ? matches.length : 0;
+                            field.setText(newText);
+                        }
                     }
+                });
+
+                if (count === 0) {
+                    showAlert('No editable fields found with that text', 'info');
+                    return;
                 }
+
+                const pdfBytes = await pdfDoc.save();
+                state.currentContent = pdfBytes;
+                state.replacementCount += count;
+                addToHistory(`Replaced "${findText}" with "${replaceText}" (${count} times)`);
+                
+                await renderPDF();
+                updateStats();
+                updateHistoryUI();
+                showAlert(`Successfully replaced ${count} occurrence(s) in form fields`, 'success');
+            } catch (error) {
+                console.error('PDF processing error:', error);
+                showAlert('Error processing PDF: ' + error.message, 'error');
+            }
+        }
+
+        // Undo/Redo
+        undoBtn.addEventListener('click', () => {
+            if (state.historyIndex > 0) {
+                state.historyIndex--;
+                restoreFromHistory();
+            }
+        });
+
+        redoBtn.addEventListener('click', () => {
+            if (state.historyIndex < state.history.length - 1) {
+                state.historyIndex++;
+                restoreFromHistory();
+            }
+        });
+
+        function addToHistory(action) {
+            // Remove future history if we're not at the end
+            if (state.historyIndex < state.history.length - 1) {
+                state.history = state.history.slice(0, state.historyIndex + 1);
+            }
+
+            state.history.push({
+                action: action,
+                content: state.fileType === 'html' 
+                    ? state.currentContent 
+                    : state.currentContent.slice(0),
+                replacementCount: state.replacementCount,
+                timestamp: new Date().toLocaleTimeString()
             });
 
-            if (replacementsMade === 0) {
-                showAlert('No editable text fields found with "' + findText + '". PDF editing is limited to form fields.', 'info');
+            state.historyIndex = state.history.length - 1;
+            updateUndoRedoButtons();
+        }
+
+        function restoreFromHistory() {
+            const historyItem = state.history[state.historyIndex];
+            state.currentContent = state.fileType === 'html'
+                ? historyItem.content
+                : historyItem.content.slice(0);
+            state.replacementCount = historyItem.replacementCount;
+
+            if (state.fileType === 'html') {
+                renderHTML();
+            } else {
+                renderPDF();
+            }
+
+            updateStats();
+            updateHistoryUI();
+            updateUndoRedoButtons();
+            showAlert('Restored: ' + historyItem.action, 'info');
+        }
+
+        function updateUndoRedoButtons() {
+            undoBtn.disabled = state.historyIndex <= 0;
+            redoBtn.disabled = state.historyIndex >= state.history.length - 1;
+        }
+
+        function updateHistoryUI() {
+            if (state.history.length === 0) {
+                historySection.style.display = 'none';
                 return;
             }
 
-            const pdfBytes = await pdfDoc.save();
-            modifiedContent = pdfBytes;
-            
-            // Show updated preview
-            await showPDFPreview(pdfBytes, true);
-            
-            showStats();
-            showAlert(`Successfully replaced ${replacementsMade} occurrence(s) in form fields! Click "Download PDF" to save.`, 'success');
+            historySection.style.display = 'block';
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+
+            state.history.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item' + (index === state.historyIndex ? ' current' : '');
+                div.innerHTML = `
+                    <div>
+                        <div style="font-weight: 600;">${item.action}</div>
+                        <div style="font-size: 0.75rem; opacity: 0.8;">${item.timestamp}</div>
+                    </div>
+                `;
+                div.addEventListener('click', () => {
+                    state.historyIndex = index;
+                    restoreFromHistory();
+                });
+                historyList.appendChild(div);
+            });
         }
+
+        // View switching
+        document.querySelectorAll('.view-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                state.currentView = e.target.dataset.view;
+                if (state.fileType === 'html') {
+                    renderHTML();
+                }
+            });
+        });
+
+        // Copy HTML
+        copyHtmlBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(state.currentContent);
+                showAlert('HTML copied to clipboard!', 'success');
+            } catch (error) {
+                showAlert('Failed to copy', 'error');
+            }
+        });
+
+        // Download
+        downloadBtn.addEventListener('click', () => {
+            if (state.fileType === 'html') {
+                const blob = new Blob([state.currentContent], { type: 'text/html' });
+                downloadFile(blob, state.file.name.replace(/\.(html|htm)$/, '_edited.html'));
+            } else {
+                const blob = new Blob([state.currentContent], { type: 'application/pdf' });
+                downloadFile(blob, state.file.name.replace('.pdf', '_edited.pdf'));
+            }
+            showAlert('File downloaded successfully!', 'success');
+        });
+
+        // Clear button
+        clearBtn.addEventListener('click', () => {
+            document.getElementById('findText').value = '';
+            document.getElementById('replaceText').value = '';
+            document.getElementById('caseSensitive').checked = false;
+            document.getElementById('wholeWord').checked = false;
+        });
 
         // Helper functions
         function escapeRegex(string) {
@@ -928,179 +1117,27 @@
             URL.revokeObjectURL(url);
         }
 
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        function updateStats() {
+            replacementCount.textContent = state.replacementCount;
+            statusStat.textContent = state.historyIndex > 0 ? 'Modified' : 'Original';
+        }
+
         function showAlert(message, type) {
-            alertContainer.innerHTML = `
-                <div class="alert alert-${type}">
-                    ${message}
-                </div>
-            `;
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            document.body.appendChild(alert);
+
             setTimeout(() => {
-                alertContainer.innerHTML = '';
-            }, 5000);
+                alert.remove();
+            }, 3000);
         }
-
-        function showStats() {
-            statsContainer.innerHTML = `
-                <div class="stats">
-                    <div class="stat-item">
-                        <span class="stat-value">${replacementsMade}</span>
-                        <span class="stat-label">Replacements</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value">${currentFileType.toUpperCase()}</span>
-                        <span class="stat-label">File Type</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value">✓</span>
-                        <span class="stat-label">Complete</span>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Preview functions
-        function showPreview(view) {
-            currentView = view;
-            
-            // Update tab states
-            document.querySelectorAll('.preview-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            if (view === 'original') {
-                originalTab.classList.add('active');
-                previewBox.classList.remove('code-view');
-                const iframe = document.createElement('iframe');
-                iframe.srcdoc = currentContent;
-                previewContent.innerHTML = '';
-                previewContent.appendChild(iframe);
-            } else if (view === 'edited') {
-                editedTab.classList.add('active');
-                previewBox.classList.remove('code-view');
-                if (modifiedContent) {
-                    const iframe = document.createElement('iframe');
-                    iframe.srcdoc = modifiedContent;
-                    previewContent.innerHTML = '';
-                    previewContent.appendChild(iframe);
-                }
-            } else if (view === 'code') {
-                codeTab.classList.add('active');
-                previewBox.classList.add('code-view');
-                const content = currentView === 'edited' && modifiedContent ? modifiedContent : currentContent;
-                previewContent.textContent = content;
-            }
-        }
-        
-        async function showPDFPreview(pdfData, isEdited = false) {
-            try {
-                const loadingTask = pdfjsLib.getDocument({data: pdfData});
-                pdfDocument = await loadingTask.promise;
-                
-                previewBox.classList.remove('code-view');
-                previewContent.innerHTML = '<div class="pdf-preview"></div>';
-                const pdfPreview = previewContent.querySelector('.pdf-preview');
-                
-                // Render first 3 pages for preview
-                const numPages = Math.min(pdfDocument.numPages, 3);
-                
-                for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-                    const page = await pdfDocument.getPage(pageNum);
-                    const viewport = page.getViewport({ scale: 1.5 });
-                    
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-                    
-                    const pageDiv = document.createElement('div');
-                    pageDiv.className = 'pdf-page';
-                    pageDiv.appendChild(canvas);
-                    pdfPreview.appendChild(pageDiv);
-                    
-                    await page.render({
-                        canvasContext: context,
-                        viewport: viewport
-                    }).promise;
-                }
-                
-                if (pdfDocument.numPages > 3) {
-                    const morePages = document.createElement('p');
-                    morePages.style.cssText = 'text-align: center; color: var(--text-secondary); margin-top: 1rem;';
-                    morePages.textContent = `... and ${pdfDocument.numPages - 3} more page(s)`;
-                    pdfPreview.appendChild(morePages);
-                }
-            } catch (error) {
-                console.error('Error rendering PDF:', error);
-                previewContent.innerHTML = '<p style="color: var(--danger);">Error loading PDF preview</p>';
-            }
-        }
-        
-        // Tab switching
-        originalTab.addEventListener('click', () => {
-            if (currentFileType === 'html') {
-                showPreview('original');
-            }
-        });
-        
-        editedTab.addEventListener('click', () => {
-            if (currentFileType === 'html' && modifiedContent) {
-                showPreview('edited');
-            }
-        });
-        
-        codeTab.addEventListener('click', () => {
-            if (currentFileType === 'html') {
-                showPreview('code');
-            }
-        });
-        
-        // Copy HTML button
-        copyHtmlBtn.addEventListener('click', async () => {
-            const contentToCopy = modifiedContent || currentContent;
-            try {
-                await navigator.clipboard.writeText(contentToCopy);
-                
-                // Show notification
-                const notification = document.createElement('div');
-                notification.className = 'copied-notification';
-                notification.textContent = '✓ HTML copied to clipboard!';
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.remove();
-                }, 3000);
-            } catch (error) {
-                showAlert('Failed to copy to clipboard', 'error');
-            }
-        });
-        
-        // Download PDF button
-        downloadPdfBtn.addEventListener('click', () => {
-            const pdfData = modifiedContent || currentContent;
-            const blob = new Blob([pdfData], { type: 'application/pdf' });
-            const fileName = modifiedContent 
-                ? currentFile.name.replace('.pdf', '_edited.pdf')
-                : currentFile.name;
-            downloadFile(blob, fileName);
-            showAlert('PDF downloaded successfully!', 'success');
-        });
-
-        // Reset button
-        resetBtn.addEventListener('click', () => {
-            document.getElementById('findText').value = '';
-            document.getElementById('replaceText').value = '';
-            document.getElementById('caseSensitive').checked = false;
-            document.getElementById('wholeWord').checked = false;
-            alertContainer.innerHTML = '';
-            statsContainer.innerHTML = '';
-            
-            // Reset to original content if HTML
-            if (currentFileType === 'html' && modifiedContent) {
-                modifiedContent = null;
-                editedTab.style.display = 'none';
-                originalTab.click();
-            }
-        });
     </script>
 </body>
 </html>
