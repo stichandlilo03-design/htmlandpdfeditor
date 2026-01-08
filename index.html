@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProEdit - Professional Document Editor</title>
+    <title>ProEdit - Advanced PDF & Image Editor</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
     <style>
         :root {
             --primary: #6366F1;
@@ -22,7 +23,6 @@
             --text-secondary: #64748B;
             --border: #E2E8F0;
             --shadow: 0 10px 40px rgba(99, 102, 241, 0.1);
-            --shadow-lg: 0 20px 60px rgba(99, 102, 241, 0.15);
         }
 
         * {
@@ -40,12 +40,11 @@
 
         .app-container {
             display: grid;
-            grid-template-columns: 320px 1fr;
+            grid-template-columns: 340px 1fr;
             height: 100vh;
             overflow: hidden;
         }
 
-        /* Sidebar */
         .sidebar {
             background: var(--bg-card);
             border-right: 1px solid var(--border);
@@ -94,11 +93,6 @@
             background: rgba(99, 102, 241, 0.05);
         }
 
-        .upload-area.dragover {
-            border-color: var(--success);
-            background: rgba(16, 185, 129, 0.1);
-        }
-
         .upload-icon {
             font-size: 2.5rem;
             margin-bottom: 0.5rem;
@@ -125,15 +119,6 @@
             color: var(--primary);
             font-family: 'Space Mono', monospace;
             font-size: 0.875rem;
-            word-break: break-all;
-        }
-
-        .file-meta {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
         }
 
         .controls-section {
@@ -162,8 +147,7 @@
             margin-bottom: 0.5rem;
         }
 
-        input[type="text"],
-        textarea {
+        input[type="text"] {
             width: 100%;
             padding: 0.75rem;
             background: var(--bg-secondary);
@@ -171,11 +155,9 @@
             border-radius: 8px;
             font-size: 0.875rem;
             font-family: 'Space Mono', monospace;
-            transition: all 0.2s ease;
         }
 
-        input[type="text"]:focus,
-        textarea:focus {
+        input[type="text"]:focus {
             outline: none;
             border-color: var(--primary);
             background: var(--bg-card);
@@ -193,19 +175,6 @@
             gap: 0.5rem;
             font-size: 0.875rem;
             cursor: pointer;
-        }
-
-        input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            margin-top: 1.5rem;
         }
 
         button {
@@ -231,23 +200,21 @@
         .btn-primary {
             background: var(--primary);
             color: white;
+            width: 100%;
+            margin-top: 0.5rem;
         }
 
         .btn-primary:hover:not(:disabled) {
             background: var(--primary-dark);
             transform: translateY(-1px);
-            box-shadow: var(--shadow);
         }
 
         .btn-secondary {
             background: var(--bg-secondary);
             color: var(--text-primary);
             border: 2px solid var(--border);
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            background: var(--bg-card);
-            border-color: var(--text-secondary);
+            width: 100%;
+            margin-top: 0.5rem;
         }
 
         .btn-success {
@@ -255,55 +222,18 @@
             color: white;
         }
 
-        .btn-success:hover:not(:disabled) {
-            background: #059669;
-            transform: translateY(-1px);
-        }
-
         .btn-warning {
             background: var(--warning);
             color: white;
-        }
-
-        .btn-warning:hover:not(:disabled) {
-            background: #D97706;
-            transform: translateY(-1px);
         }
 
         .btn-icon {
             background: transparent;
             padding: 0.5rem;
             border: 1px solid var(--border);
+            width: auto;
         }
 
-        .btn-icon:hover:not(:disabled) {
-            background: var(--bg-secondary);
-        }
-
-        .stats {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-        }
-
-        .stat-label {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .stat-value {
-            font-weight: 700;
-            color: var(--primary);
-            font-size: 1.125rem;
-        }
-
-        /* Main Content */
         .main-content {
             display: flex;
             flex-direction: column;
@@ -324,12 +254,9 @@
             display: flex;
             gap: 0.5rem;
             align-items: center;
-            padding-right: 0.75rem;
-            border-right: 1px solid var(--border);
         }
 
         .toolbar-group:last-child {
-            border-right: none;
             margin-left: auto;
         }
 
@@ -370,7 +297,6 @@
             min-height: 600px;
         }
 
-        /* HTML Editor */
         .html-preview {
             padding: 2rem;
         }
@@ -401,11 +327,6 @@
             resize: vertical;
         }
 
-        .code-editor-textarea:focus {
-            outline: 2px solid var(--primary);
-        }
-
-        /* PDF Editor */
         .pdf-editor {
             padding: 2rem;
         }
@@ -424,19 +345,13 @@
             margin-bottom: 0.75rem;
         }
 
-        .pdf-info-banner p {
-            color: var(--text-primary);
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
+        .pdf-info-banner.warning {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 146, 60, 0.05));
+            border-color: var(--warning);
         }
 
-        .pdf-info-banner .tip {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-top: 0.5rem;
-            padding: 0.5rem;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 6px;
+        .pdf-info-banner.warning h3 {
+            color: var(--warning);
         }
 
         .pdf-canvas-container {
@@ -464,14 +379,57 @@
             color: var(--text-secondary);
         }
 
-        /* Alerts */
+        /* OCR OVERLAY */
+        .ocr-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .ocr-text-box {
+            position: absolute;
+            background: rgba(99, 102, 241, 0.1);
+            border: 2px dashed var(--primary);
+            cursor: text;
+            pointer-events: auto;
+            transition: all 0.2s ease;
+            padding: 4px;
+        }
+
+        .ocr-text-box:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--primary-dark);
+        }
+
+        .ocr-text-box.editing {
+            background: white;
+            border: 2px solid var(--primary);
+            z-index: 100;
+        }
+
+        .ocr-text-box input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            padding: 2px;
+        }
+
+        .ocr-text-box input:focus {
+            outline: none;
+        }
+
         .alert {
             position: fixed;
             top: 2rem;
             right: 2rem;
             padding: 1rem 1.5rem;
             border-radius: 8px;
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
             animation: slideInRight 0.3s ease-out;
             z-index: 1000;
             max-width: 400px;
@@ -492,6 +450,11 @@
             color: white;
         }
 
+        .alert-warning {
+            background: var(--warning);
+            color: white;
+        }
+
         @keyframes slideInRight {
             from {
                 opacity: 0;
@@ -503,82 +466,77 @@
             }
         }
 
-        /* Loading Spinner */
-        .spinner {
-            border: 3px solid var(--border);
-            border-top: 3px solid var(--primary);
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 0.8s linear infinite;
+        .stats {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .app-container {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                display: none;
-            }
-        }
-
-        /* History Panel */
-        .history-section {
-            padding: 1.5rem;
-        }
-
-        .history-item {
-            padding: 0.75rem;
-            background: var(--bg-secondary);
-            border-radius: 6px;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .history-item:hover {
-            background: var(--bg-main);
-        }
-
-        .history-item.current {
-            background: var(--primary);
-            color: white;
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
                 <h1>ProEdit</h1>
-                <p>Professional Document Editor</p>
+                <p>Advanced PDF & Image Editor</p>
             </div>
 
             <div class="upload-section">
                 <div class="upload-area" id="uploadArea">
                     <div class="upload-icon">📁</div>
                     <p style="font-weight: 600; margin-bottom: 0.25rem;">Upload Document</p>
-                    <p style="font-size: 0.75rem; color: var(--text-secondary);">HTML or PDF</p>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary);">HTML, PDF, or Images</p>
                 </div>
-                <input type="file" id="fileInput" accept=".html,.htm,.pdf">
+                <input type="file" id="fileInput" accept=".html,.htm,.pdf,.jpg,.jpeg,.png">
                 <div class="file-info" id="fileInfo">
                     <div class="file-name" id="fileName"></div>
-                    <div class="file-meta">
-                        <span id="fileSize"></span>
-                        <span>•</span>
-                        <span id="fileType"></span>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                        <span id="fileSize"></span> • <span id="fileType"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-section" id="ocrSection" style="display: none;">
+                <div class="section-title">🔍 OCR (Text Recognition)</div>
+                <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    Extract text from scanned images or PDFs
+                </p>
+                <button class="btn-warning" id="extractTextBtn">
+                    🔍 Extract Text (OCR)
+                </button>
+                <div id="ocrProgress" style="display: none; margin-top: 1rem;">
+                    <p style="font-size: 0.875rem; margin-bottom: 0.5rem;">Processing: <span id="ocrProgressText">0%</span></p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="ocrProgressBar" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
@@ -603,62 +561,37 @@
                         <span>Whole Words Only</span>
                     </label>
                 </div>
-                <div class="button-group">
-                    <button class="btn-primary" id="replaceBtn">
-                        🔄 Replace All
-                    </button>
-                    <button class="btn-secondary" id="clearBtn">
-                        ✖️ Clear Fields
-                    </button>
-                </div>
+                <button class="btn-primary" id="replaceBtn">🔄 Replace All</button>
+                <button class="btn-secondary" id="clearBtn">✖️ Clear Fields</button>
             </div>
 
             <div class="stats" id="statsSection" style="display: none;">
                 <div class="section-title">Statistics</div>
                 <div class="stat-item">
-                    <span class="stat-label">Replacements</span>
+                    <span style="font-size: 0.875rem; color: var(--text-secondary);">Replacements</span>
                     <span class="stat-value" id="replacementCount">0</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">File Size</span>
-                    <span class="stat-value" id="fileSizeStat">-</span>
+                    <span style="font-size: 0.875rem; color: var(--text-secondary);">OCR Items</span>
+                    <span class="stat-value" id="ocrItemCount">0</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">Status</span>
+                    <span style="font-size: 0.875rem; color: var(--text-secondary);">Status</span>
                     <span class="stat-value" id="statusStat">Ready</span>
                 </div>
             </div>
-
-            <div class="history-section" id="historySection" style="display: none;">
-                <div class="section-title">History</div>
-                <div id="historyList"></div>
-            </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
             <div class="toolbar">
-                <div class="toolbar-group">
-                    <button class="btn-icon" id="undoBtn" title="Undo" disabled>
-                        ↶
-                    </button>
-                    <button class="btn-icon" id="redoBtn" title="Redo" disabled>
-                        ↷
-                    </button>
-                </div>
-
                 <div class="toolbar-group view-tabs" id="viewTabs" style="display: none;">
                     <button class="view-tab active" data-view="preview">Preview</button>
                     <button class="view-tab" data-view="code">Code</button>
                 </div>
 
                 <div class="toolbar-group">
-                    <button class="btn-success" id="copyHtmlBtn" style="display: none;">
-                        📋 Copy HTML
-                    </button>
-                    <button class="btn-success" id="downloadBtn" style="display: none;">
-                        ⬇️ Download
-                    </button>
+                    <button class="btn-success" id="copyHtmlBtn" style="display: none;">📋 Copy HTML</button>
+                    <button class="btn-success" id="downloadBtn" style="display: none;">⬇️ Download</button>
                 </div>
             </div>
 
@@ -668,7 +601,10 @@
                         <div style="text-align: center;">
                             <div style="font-size: 4rem; margin-bottom: 1rem;">📄</div>
                             <h2 style="margin-bottom: 0.5rem;">No Document Loaded</h2>
-                            <p>Upload an HTML or PDF file to get started</p>
+                            <p>Upload HTML, PDF, or Image to get started</p>
+                            <p style="font-size: 0.875rem; margin-top: 1rem; color: var(--text-primary);">
+                                ✨ <strong>NEW:</strong> OCR support for scanned PDFs & images!
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -677,24 +613,22 @@
     </div>
 
     <script>
-        // Set PDF.js worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // State management
         const state = {
             file: null,
             fileType: null,
             originalContent: null,
             currentContent: null,
-            history: [],
-            historyIndex: -1,
             pdfDoc: null,
             currentView: 'preview',
             replacementCount: 0,
-            pdfFormFields: []
+            pdfBase64: null,
+            pdfFormFields: [],
+            ocrData: [],
+            ocrEnabled: false
         };
 
-        // Elements
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const fileInfo = document.getElementById('fileInfo');
@@ -702,100 +636,86 @@
         const fileSize = document.getElementById('fileSize');
         const fileType = document.getElementById('fileType');
         const findReplaceSection = document.getElementById('findReplaceSection');
+        const ocrSection = document.getElementById('ocrSection');
         const statsSection = document.getElementById('statsSection');
-        const historySection = document.getElementById('historySection');
         const editorContent = document.getElementById('editorContent');
         const viewTabs = document.getElementById('viewTabs');
-        const undoBtn = document.getElementById('undoBtn');
-        const redoBtn = document.getElementById('redoBtn');
         const replaceBtn = document.getElementById('replaceBtn');
         const clearBtn = document.getElementById('clearBtn');
         const copyHtmlBtn = document.getElementById('copyHtmlBtn');
         const downloadBtn = document.getElementById('downloadBtn');
+        const extractTextBtn = document.getElementById('extractTextBtn');
         const replacementCount = document.getElementById('replacementCount');
-        const fileSizeStat = document.getElementById('fileSizeStat');
+        const ocrItemCount = document.getElementById('ocrItemCount');
         const statusStat = document.getElementById('statusStat');
 
-        // Upload handlers
         uploadArea.addEventListener('click', () => fileInput.click());
-
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            if (e.dataTransfer.files.length > 0) {
-                handleFile(e.dataTransfer.files[0]);
-            }
-        });
-
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 handleFile(e.target.files[0]);
             }
         });
 
-        // Handle file upload
         async function handleFile(file) {
             const ext = file.name.split('.').pop().toLowerCase();
-            if (!['html', 'htm', 'pdf'].includes(ext)) {
-                showAlert('Please upload an HTML or PDF file', 'error');
+            if (!['html', 'htm', 'pdf', 'jpg', 'jpeg', 'png'].includes(ext)) {
+                showAlert('Please upload HTML, PDF, or Image file', 'error');
                 return;
             }
 
             state.file = file;
-            state.fileType = ext === 'pdf' ? 'pdf' : 'html';
-            state.history = [];
-            state.historyIndex = -1;
+            state.fileType = ext === 'pdf' ? 'pdf' : (ext === 'html' || ext === 'htm' ? 'html' : 'image');
             state.replacementCount = 0;
+            state.ocrData = [];
+            state.ocrEnabled = false;
 
-            // Update UI
             fileInfo.classList.add('active');
             fileName.textContent = file.name;
             fileSize.textContent = formatFileSize(file.size);
             fileType.textContent = state.fileType.toUpperCase();
-            fileSizeStat.textContent = formatFileSize(file.size);
-            findReplaceSection.style.display = 'block';
             statsSection.style.display = 'block';
 
             if (state.fileType === 'html') {
                 const text = await file.text();
                 state.originalContent = text;
                 state.currentContent = text;
-                addToHistory('Original document loaded');
                 renderHTML();
                 viewTabs.style.display = 'flex';
                 copyHtmlBtn.style.display = 'flex';
                 downloadBtn.style.display = 'flex';
+                findReplaceSection.style.display = 'block';
+                ocrSection.style.display = 'none';
                 showAlert('HTML file loaded successfully', 'success');
-            } else {
-                // Store PDF as base64 string
+            } else if (state.fileType === 'pdf') {
                 const reader = new FileReader();
                 reader.onload = async function(e) {
-                    const base64 = e.target.result.split(',')[1];
-                    state.originalContent = base64;
-                    state.currentContent = base64;
-                    addToHistory('Original PDF loaded');
+                    state.pdfBase64 = e.target.result.split(',')[1];
+                    state.currentContent = state.pdfBase64;
                     await renderPDF();
                     viewTabs.style.display = 'none';
                     copyHtmlBtn.style.display = 'none';
                     downloadBtn.style.display = 'flex';
-                    showAlert('PDF file loaded successfully', 'success');
+                    ocrSection.style.display = 'block';
+                    findReplaceSection.style.display = 'block';
+                    showAlert('PDF loaded - OCR available!', 'success');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    state.currentContent = e.target.result;
+                    renderImage();
+                    viewTabs.style.display = 'none';
+                    copyHtmlBtn.style.display = 'none';
+                    downloadBtn.style.display = 'none';
+                    ocrSection.style.display = 'block';
+                    findReplaceSection.style.display = 'none';
+                    showAlert('Image loaded - Extract text with OCR!', 'success');
                 };
                 reader.readAsDataURL(file);
             }
-
-            updateHistoryUI();
         }
 
-        // Render HTML
         function renderHTML() {
             const view = state.currentView;
             if (view === 'preview') {
@@ -820,67 +740,84 @@
             }
         }
 
-        // Render PDF - Clean version without text overlay
+        function renderImage() {
+            editorContent.innerHTML = `
+                <div class="pdf-editor">
+                    <div class="pdf-info-banner warning">
+                        <h3>🖼️ Image Loaded</h3>
+                        <p><strong>Click "Extract Text (OCR)"</strong> to recognize text in this image.</p>
+                        <p style="font-size: 0.875rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                            💡 After extraction, you can search & replace text!
+                        </p>
+                    </div>
+                    <div class="pdf-canvas-container">
+                        <img src="${state.currentContent}" style="width: 100%; display: block;" id="imageCanvas">
+                        <div class="ocr-overlay" id="ocrOverlay"></div>
+                    </div>
+                </div>
+            `;
+        }
+
         async function renderPDF() {
             try {
-                // Convert base64 to Uint8Array
                 const binaryString = atob(state.currentContent);
                 const bytes = new Uint8Array(binaryString.length);
                 for (let i = 0; i < binaryString.length; i++) {
                     bytes[i] = binaryString.charCodeAt(i);
                 }
-                
+
                 const loadingTask = pdfjsLib.getDocument({data: bytes});
                 state.pdfDoc = await loadingTask.promise;
-                
+
                 editorContent.innerHTML = '<div class="pdf-editor" id="pdfEditor"></div>';
                 const pdfEditor = document.getElementById('pdfEditor');
 
                 // Check for form fields
+                let hasFormFields = false;
                 try {
                     const pdfLibDoc = await PDFLib.PDFDocument.load(bytes);
                     const form = pdfLibDoc.getForm();
                     const fields = form.getFields();
-                    
                     state.pdfFormFields = fields.map(field => ({
                         name: field.getName(),
                         type: field.constructor.name,
                         value: field.constructor.name === 'PDFTextField' ? (field.getText() || '') : null
                     }));
+                    hasFormFields = fields.length > 0;
                 } catch (e) {
-                    console.log('No form fields found:', e);
                     state.pdfFormFields = [];
                 }
 
-                // Show info banner
+                // Info banner
                 const banner = document.createElement('div');
-                banner.className = 'pdf-info-banner';
-                if (state.pdfFormFields.length > 0) {
+                banner.className = hasFormFields ? 'pdf-info-banner' : 'pdf-info-banner warning';
+                if (hasFormFields) {
                     banner.innerHTML = `
-                        <h3>📝 ${state.pdfFormFields.length} Editable Form Fields Found</h3>
-                        <p><strong>Use Find & Replace</strong> to edit the text in form fields.</p>
-                        <div class="tip">
-                            💡 <strong>Tip:</strong> PDF form fields are the only parts that can be permanently edited and saved. Regular text in PDFs cannot be modified.
-                        </div>
+                        <h3>✅ ${state.pdfFormFields.length} Editable Form Fields</h3>
+                        <p><strong>Use Find & Replace</strong> to edit form fields directly!</p>
+                        <p style="font-size: 0.875rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                            💡 Text will be permanently saved in the PDF
+                        </p>
                     `;
                 } else {
                     banner.innerHTML = `
-                        <h3>📄 PDF Preview</h3>
-                        <p>This PDF contains no editable form fields. You can view it here but cannot make permanent edits.</p>
-                        <div class="tip">
-                            💡 <strong>Note:</strong> Only PDF files with form fields support Find & Replace editing. This is a limitation of the PDF format.
-                        </div>
+                        <h3>⚠️ No Editable Form Fields Found</h3>
+                        <p><strong>Click "Extract Text (OCR)"</strong> to make this PDF editable!</p>
+                        <p style="font-size: 0.875rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                            💡 OCR will extract all text from images and make it searchable & replaceable
+                        </p>
                     `;
                 }
                 pdfEditor.appendChild(banner);
 
-                // Render all pages cleanly
+                // Render pages
                 for (let pageNum = 1; pageNum <= state.pdfDoc.numPages; pageNum++) {
                     const page = await state.pdfDoc.getPage(pageNum);
                     const viewport = page.getViewport({ scale: 1.5 });
 
                     const container = document.createElement('div');
                     container.className = 'pdf-canvas-container';
+                    container.dataset.pageNum = pageNum;
 
                     const canvas = document.createElement('canvas');
                     canvas.className = 'pdf-page-canvas';
@@ -895,9 +832,14 @@
                         viewport: viewport
                     }).promise;
 
+                    const ocrOverlay = document.createElement('div');
+                    ocrOverlay.className = 'ocr-overlay';
+                    ocrOverlay.id = `ocr-overlay-${pageNum}`;
+                    container.appendChild(ocrOverlay);
+
                     const pageLabel = document.createElement('div');
                     pageLabel.className = 'pdf-page-label';
-                    pageLabel.innerHTML = `Page ${pageNum} <span style="font-weight: 400;">of ${state.pdfDoc.numPages}</span>`;
+                    pageLabel.innerHTML = `Page ${pageNum} of ${state.pdfDoc.numPages}`;
                     container.appendChild(pageLabel);
 
                     pdfEditor.appendChild(container);
@@ -905,19 +847,151 @@
 
             } catch (error) {
                 console.error('Error rendering PDF:', error);
-                editorContent.innerHTML = `
-                    <div style="padding: 4rem 2rem; text-align: center;">
-                        <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
-                        <h3 style="color: var(--danger); margin-bottom: 1rem;">Error Loading PDF</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">${error.message}</p>
-                        <p style="font-size: 0.875rem; color: var(--text-secondary);">Please try uploading a different PDF file.</p>
-                    </div>
-                `;
                 showAlert('Error loading PDF: ' + error.message, 'error');
             }
         }
 
-        // Find and replace
+        // OCR FUNCTIONALITY
+        extractTextBtn.addEventListener('click', async () => {
+            extractTextBtn.disabled = true;
+            extractTextBtn.innerHTML = '<span style="width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block;"></span> Extracting...';
+            
+            document.getElementById('ocrProgress').style.display = 'block';
+
+            try {
+                if (state.fileType === 'image') {
+                    await performOCROnImage(state.currentContent);
+                } else if (state.fileType === 'pdf') {
+                    await performOCROnPDF();
+                }
+
+                state.ocrEnabled = true;
+                findReplaceSection.style.display = 'block';
+                showAlert(`OCR Complete! Extracted ${state.ocrData.length} text items`, 'success');
+            } catch (error) {
+                showAlert('OCR Error: ' + error.message, 'error');
+            } finally {
+                extractTextBtn.disabled = false;
+                extractTextBtn.innerHTML = '🔍 Extract Text (OCR)';
+                document.getElementById('ocrProgress').style.display = 'none';
+            }
+        });
+
+        async function performOCROnImage(imageData) {
+            const result = await Tesseract.recognize(
+                imageData,
+                'eng',
+                {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            const progress = Math.round(m.progress * 100);
+                            document.getElementById('ocrProgressText').textContent = progress + '%';
+                            document.getElementById('ocrProgressBar').style.width = progress + '%';
+                        }
+                    }
+                }
+            );
+
+            const overlay = document.getElementById('ocrOverlay');
+            const img = document.getElementById('imageCanvas');
+            const imgRect = img.getBoundingClientRect();
+
+            result.data.words.forEach((word, index) => {
+                const box = word.bbox;
+                const textBox = document.createElement('div');
+                textBox.className = 'ocr-text-box';
+                textBox.dataset.index = index;
+                textBox.dataset.original = word.text;
+
+                const scaleX = img.offsetWidth / img.naturalWidth;
+                const scaleY = img.offsetHeight / img.naturalHeight;
+
+                textBox.style.left = (box.x0 * scaleX) + 'px';
+                textBox.style.top = (box.y0 * scaleY) + 'px';
+                textBox.style.width = ((box.x1 - box.x0) * scaleX) + 'px';
+                textBox.style.height = ((box.y1 - box.y0) * scaleY) + 'px';
+                textBox.style.fontSize = ((box.y1 - box.y0) * scaleY * 0.8) + 'px';
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = word.text;
+                textBox.appendChild(input);
+
+                overlay.appendChild(textBox);
+
+                state.ocrData.push({
+                    element: textBox,
+                    text: word.text,
+                    input: input
+                });
+            });
+
+            ocrItemCount.textContent = state.ocrData.length;
+        }
+
+        async function performOCROnPDF() {
+            const totalPages = state.pdfDoc.numPages;
+            
+            for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+                document.getElementById('ocrProgressText').textContent = `Page ${pageNum}/${totalPages}`;
+                document.getElementById('ocrProgressBar').style.width = ((pageNum / totalPages) * 100) + '%';
+
+                const page = await state.pdfDoc.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 2 });
+
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                const context = canvas.getContext('2d');
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+
+                const imageData = canvas.toDataURL();
+                const result = await Tesseract.recognize(imageData, 'eng');
+
+                const overlay = document.getElementById(`ocr-overlay-${pageNum}`);
+                const container = overlay.parentElement;
+                const displayCanvas = container.querySelector('.pdf-page-canvas');
+
+                result.data.words.forEach((word, index) => {
+                    const box = word.bbox;
+                    const textBox = document.createElement('div');
+                    textBox.className = 'ocr-text-box';
+                    textBox.dataset.pageNum = pageNum;
+                    textBox.dataset.index = index;
+                    textBox.dataset.original = word.text;
+
+                    const scale = displayCanvas.offsetWidth / viewport.width;
+
+                    textBox.style.left = (box.x0 * scale) + 'px';
+                    textBox.style.top = (box.y0 * scale) + 'px';
+                    textBox.style.width = ((box.x1 - box.x0) * scale) + 'px';
+                    textBox.style.height = ((box.y1 - box.y0) * scale) + 'px';
+                    textBox.style.fontSize = ((box.y1 - box.y0) * scale * 0.7) + 'px';
+
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = word.text;
+                    textBox.appendChild(input);
+
+                    overlay.appendChild(textBox);
+
+                    state.ocrData.push({
+                        element: textBox,
+                        text: word.text,
+                        input: input,
+                        pageNum: pageNum
+                    });
+                });
+            }
+
+            ocrItemCount.textContent = state.ocrData.length;
+        }
+
+        // Find and Replace
         replaceBtn.addEventListener('click', async () => {
             const findText = document.getElementById('findText').value;
             const replaceText = document.getElementById('replaceText').value;
@@ -927,30 +1001,25 @@
                 return;
             }
 
-            if (!state.file) {
-                showAlert('Please upload a file first', 'error');
-                return;
-            }
-
             replaceBtn.disabled = true;
-            replaceBtn.innerHTML = '<span class="spinner"></span> Processing...';
+            replaceBtn.innerHTML = '<span style="width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block;"></span> Processing...';
 
             try {
                 if (state.fileType === 'html') {
                     await replaceInHTML(findText, replaceText);
-                } else {
+                } else if (state.fileType === 'pdf') {
                     await replaceInPDF(findText, replaceText);
+                } else {
+                    await replaceInOCR(findText, replaceText);
                 }
             } catch (error) {
                 showAlert('Error: ' + error.message, 'error');
-                console.error(error);
             } finally {
                 replaceBtn.disabled = false;
                 replaceBtn.innerHTML = '🔄 Replace All';
             }
         });
 
-        // Replace in HTML
         async function replaceInHTML(findText, replaceText) {
             const caseSensitive = document.getElementById('caseSensitive').checked;
             const wholeWord = document.getElementById('wholeWord').checked;
@@ -969,157 +1038,100 @@
 
             state.currentContent = state.currentContent.replace(regex, replaceText);
             state.replacementCount += count;
-            addToHistory(`Replaced "${findText}" with "${replaceText}" (${count} times)`);
-            
             renderHTML();
-            updateStats();
-            updateHistoryUI();
+            replacementCount.textContent = state.replacementCount;
             showAlert(`Successfully replaced ${count} occurrence(s)`, 'success');
         }
 
-        // Replace in PDF
         async function replaceInPDF(findText, replaceText) {
             const caseSensitive = document.getElementById('caseSensitive').checked;
-            
-            try {
-                // Convert base64 to Uint8Array
-                const binaryString = atob(state.currentContent);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                    bytes[i] = binaryString.charCodeAt(i);
-                }
-                
-                const pdfDoc = await PDFLib.PDFDocument.load(bytes);
-                const form = pdfDoc.getForm();
-                const fields = form.getFields();
-                let count = 0;
+            let totalCount = 0;
 
-                fields.forEach(field => {
-                    if (field.constructor.name === 'PDFTextField') {
-                        const text = field.getText() || '';
-                        const regex = caseSensitive 
-                            ? new RegExp(escapeRegex(findText), 'g')
-                            : new RegExp(escapeRegex(findText), 'gi');
-                        
-                        if (regex.test(text)) {
-                            const newText = text.replace(regex, replaceText);
-                            const matches = text.match(regex);
-                            count += matches ? matches.length : 0;
-                            field.setText(newText);
+            // Try form fields first
+            if (state.pdfFormFields.length > 0) {
+                try {
+                    const binaryString = atob(state.currentContent);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+
+                    const pdfDoc = await PDFLib.PDFDocument.load(bytes);
+                    const form = pdfDoc.getForm();
+                    const fields = form.getFields();
+
+                    fields.forEach(field => {
+                        if (field.constructor.name === 'PDFTextField') {
+                            const text = field.getText() || '';
+                            const regex = caseSensitive
+                                ? new RegExp(escapeRegex(findText), 'g')
+                                : new RegExp(escapeRegex(findText), 'gi');
+
+                            if (regex.test(text)) {
+                                const newText = text.replace(regex, replaceText);
+                                const matches = text.match(regex);
+                                totalCount += matches ? matches.length : 0;
+                                field.setText(newText);
+                            }
                         }
+                    });
+
+                    const pdfBytes = await pdfDoc.save();
+                    let binary = '';
+                    const bytes2 = new Uint8Array(pdfBytes);
+                    for (let i = 0; i < bytes2.length; i++) {
+                        binary += String.fromCharCode(bytes2[i]);
                     }
-                });
-
-                if (count === 0) {
-                    if (state.pdfFormFields.length === 0) {
-                        showAlert('This PDF has no editable form fields. Cannot perform find & replace.', 'info');
-                    } else {
-                        showAlert('No matches found in form fields.', 'info');
-                    }
-                    return;
+                    state.currentContent = btoa(binary);
+                    await renderPDF();
+                } catch (e) {
+                    console.error('Form field error:', e);
                 }
-
-                const pdfBytes = await pdfDoc.save();
-                
-                // Convert back to base64
-                let binary = '';
-                const bytes2 = new Uint8Array(pdfBytes);
-                for (let i = 0; i < bytes2.length; i++) {
-                    binary += String.fromCharCode(bytes2[i]);
-                }
-                state.currentContent = btoa(binary);
-                
-                state.replacementCount += count;
-                addToHistory(`Replaced "${findText}" with "${replaceText}" (${count} times)`);
-                
-                await renderPDF();
-                updateStats();
-                updateHistoryUI();
-                showAlert(`Successfully replaced ${count} occurrence(s) in form fields`, 'success');
-            } catch (error) {
-                console.error('PDF processing error:', error);
-                showAlert('Error processing PDF: ' + error.message, 'error');
-            }
-        }
-
-        // Undo/Redo
-        undoBtn.addEventListener('click', () => {
-            if (state.historyIndex > 0) {
-                state.historyIndex--;
-                restoreFromHistory();
-            }
-        });
-
-        redoBtn.addEventListener('click', () => {
-            if (state.historyIndex < state.history.length - 1) {
-                state.historyIndex++;
-                restoreFromHistory();
-            }
-        });
-
-        function addToHistory(action) {
-            if (state.historyIndex < state.history.length - 1) {
-                state.history = state.history.slice(0, state.historyIndex + 1);
             }
 
-            state.history.push({
-                action: action,
-                content: state.currentContent,
-                replacementCount: state.replacementCount,
-                timestamp: new Date().toLocaleTimeString()
-            });
+            // Also check OCR data
+            if (state.ocrData.length > 0) {
+                totalCount += await replaceInOCR(findText, replaceText, true);
+            }
 
-            state.historyIndex = state.history.length - 1;
-            updateUndoRedoButtons();
-        }
-
-        function restoreFromHistory() {
-            const historyItem = state.history[state.historyIndex];
-            state.currentContent = historyItem.content;
-            state.replacementCount = historyItem.replacementCount;
-
-            if (state.fileType === 'html') {
-                renderHTML();
+            if (totalCount > 0) {
+                state.replacementCount += totalCount;
+                replacementCount.textContent = state.replacementCount;
+                showAlert(`Successfully replaced ${totalCount} occurrence(s)`, 'success');
             } else {
-                renderPDF();
+                showAlert('No matches found - Try running OCR first!', 'warning');
             }
-
-            updateStats();
-            updateHistoryUI();
-            updateUndoRedoButtons();
-            showAlert('Restored: ' + historyItem.action, 'info');
         }
 
-        function updateUndoRedoButtons() {
-            undoBtn.disabled = state.historyIndex <= 0;
-            redoBtn.disabled = state.historyIndex >= state.history.length - 1;
-        }
+        async function replaceInOCR(findText, replaceText, returnCount = false) {
+            const caseSensitive = document.getElementById('caseSensitive').checked;
+            const regex = caseSensitive
+                ? new RegExp(escapeRegex(findText), 'g')
+                : new RegExp(escapeRegex(findText), 'gi');
 
-        function updateHistoryUI() {
-            if (state.history.length === 0) {
-                historySection.style.display = 'none';
-                return;
-            }
+            let count = 0;
 
-            historySection.style.display = 'block';
-            const historyList = document.getElementById('historyList');
-            historyList.innerHTML = '';
-
-            state.history.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'history-item' + (index === state.historyIndex ? ' current' : '');
-                div.innerHTML = `
-                    <div>
-                        <div style="font-weight: 600;">${item.action}</div>
-                        <div style="font-size: 0.75rem; opacity: 0.8;">${item.timestamp}</div>
-                    </div>
-                `;
-                div.addEventListener('click', () => {
-                    state.historyIndex = index;
-                    restoreFromHistory();
-                });
-                historyList.appendChild(div);
+            state.ocrData.forEach(item => {
+                const text = item.input.value;
+                if (regex.test(text)) {
+                    const newText = text.replace(regex, replaceText);
+                    const matches = text.match(regex);
+                    count += matches ? matches.length : 0;
+                    item.input.value = newText;
+                }
             });
+
+            if (returnCount) {
+                return count;
+            }
+
+            if (count > 0) {
+                state.replacementCount += count;
+                replacementCount.textContent = state.replacementCount;
+                showAlert(`Successfully replaced ${count} occurrence(s)`, 'success');
+            } else {
+                showAlert('No matches found', 'info');
+            }
         }
 
         // View switching
@@ -1158,10 +1170,9 @@
                 const blob = new Blob([bytes], { type: 'application/pdf' });
                 downloadFile(blob, state.file.name.replace('.pdf', '_edited.pdf'));
             }
-            showAlert('File downloaded successfully!', 'success');
+            showAlert('File downloaded!', 'success');
         });
 
-        // Clear button
         clearBtn.addEventListener('click', () => {
             document.getElementById('findText').value = '';
             document.getElementById('replaceText').value = '';
@@ -1169,7 +1180,6 @@
             document.getElementById('wholeWord').checked = false;
         });
 
-        // Helper functions
         function escapeRegex(string) {
             return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
@@ -1191,20 +1201,12 @@
             return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
         }
 
-        function updateStats() {
-            replacementCount.textContent = state.replacementCount;
-            statusStat.textContent = state.historyIndex > 0 ? 'Modified' : 'Original';
-        }
-
         function showAlert(message, type) {
             const alert = document.createElement('div');
             alert.className = `alert alert-${type}`;
             alert.textContent = message;
             document.body.appendChild(alert);
-
-            setTimeout(() => {
-                alert.remove();
-            }, 3000);
+            setTimeout(() => alert.remove(), 4000);
         }
     </script>
 </body>
