@@ -119,6 +119,7 @@
             color: var(--primary);
             font-family: 'Space Mono', monospace;
             font-size: 0.875rem;
+            word-break: break-all;
         }
 
         .controls-section {
@@ -147,7 +148,7 @@
             margin-bottom: 0.5rem;
         }
 
-        input[type="text"] {
+        input[type="text"], textarea {
             width: 100%;
             padding: 0.75rem;
             background: var(--bg-secondary);
@@ -157,10 +158,15 @@
             font-family: 'Space Mono', monospace;
         }
 
-        input[type="text"]:focus {
+        input[type="text"]:focus, textarea:focus {
             outline: none;
             border-color: var(--primary);
             background: var(--bg-card);
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
         }
 
         .checkbox-group {
@@ -225,6 +231,7 @@
         .btn-warning {
             background: var(--warning);
             color: white;
+            width: 100%;
         }
 
         .btn-icon {
@@ -254,10 +261,6 @@
             display: flex;
             gap: 0.5rem;
             align-items: center;
-        }
-
-        .toolbar-group:last-child {
-            margin-left: auto;
         }
 
         .view-tabs {
@@ -354,6 +357,15 @@
             color: var(--warning);
         }
 
+        .pdf-info-banner.success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+            border-color: var(--success);
+        }
+
+        .pdf-info-banner.success h3 {
+            color: var(--success);
+        }
+
         .pdf-canvas-container {
             position: relative;
             margin-bottom: 2rem;
@@ -391,23 +403,26 @@
 
         .ocr-text-box {
             position: absolute;
-            background: rgba(99, 102, 241, 0.1);
-            border: 2px dashed var(--primary);
+            background: rgba(99, 102, 241, 0.15);
+            border: 2px solid var(--primary);
             cursor: text;
             pointer-events: auto;
             transition: all 0.2s ease;
-            padding: 4px;
+            padding: 2px 4px;
+            border-radius: 3px;
         }
 
         .ocr-text-box:hover {
-            background: rgba(99, 102, 241, 0.2);
+            background: rgba(99, 102, 241, 0.25);
             border-color: var(--primary-dark);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
         }
 
         .ocr-text-box.editing {
             background: white;
             border: 2px solid var(--primary);
             z-index: 100;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
         }
 
         .ocr-text-box input {
@@ -416,7 +431,8 @@
             background: transparent;
             font-family: inherit;
             font-size: inherit;
-            padding: 2px;
+            padding: 0;
+            color: #000;
         }
 
         .ocr-text-box input:focus {
@@ -497,6 +513,26 @@
             transition: width 0.3s ease;
         }
 
+        .extracted-text-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .extracted-text-preview {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -528,7 +564,7 @@
             <div class="controls-section" id="ocrSection" style="display: none;">
                 <div class="section-title">🔍 OCR (Text Recognition)</div>
                 <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
-                    Extract text from scanned images or PDFs
+                    Extract text from images or scanned PDFs
                 </p>
                 <button class="btn-warning" id="extractTextBtn">
                     🔍 Extract Text (OCR)
@@ -539,6 +575,14 @@
                         <div class="progress-fill" id="ocrProgressBar" style="width: 0%"></div>
                     </div>
                 </div>
+            </div>
+
+            <div class="extracted-text-section" id="extractedTextSection" style="display: none;">
+                <div class="section-title">📝 Extracted Text Preview</div>
+                <div class="extracted-text-preview" id="extractedTextPreview"></div>
+                <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.75rem;">
+                    Use Find & Replace to modify this text
+                </p>
             </div>
 
             <div class="controls-section" id="findReplaceSection" style="display: none;">
@@ -555,10 +599,6 @@
                     <label class="checkbox-label">
                         <input type="checkbox" id="caseSensitive">
                         <span>Case Sensitive</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="wholeWord">
-                        <span>Whole Words Only</span>
                     </label>
                 </div>
                 <button class="btn-primary" id="replaceBtn">🔄 Replace All</button>
@@ -589,7 +629,7 @@
                     <button class="view-tab" data-view="code">Code</button>
                 </div>
 
-                <div class="toolbar-group">
+                <div class="toolbar-group" style="margin-left: auto;">
                     <button class="btn-success" id="copyHtmlBtn" style="display: none;">📋 Copy HTML</button>
                     <button class="btn-success" id="downloadBtn" style="display: none;">⬇️ Download</button>
                 </div>
@@ -603,7 +643,7 @@
                             <h2 style="margin-bottom: 0.5rem;">No Document Loaded</h2>
                             <p>Upload HTML, PDF, or Image to get started</p>
                             <p style="font-size: 0.875rem; margin-top: 1rem; color: var(--text-primary);">
-                                ✨ <strong>NEW:</strong> OCR support for scanned PDFs & images!
+                                ✨ <strong>NEW:</strong> OCR support for scanned documents!
                             </p>
                         </div>
                     </div>
@@ -626,6 +666,7 @@
             pdfBase64: null,
             pdfFormFields: [],
             ocrData: [],
+            extractedFullText: '',
             ocrEnabled: false
         };
 
@@ -637,6 +678,8 @@
         const fileType = document.getElementById('fileType');
         const findReplaceSection = document.getElementById('findReplaceSection');
         const ocrSection = document.getElementById('ocrSection');
+        const extractedTextSection = document.getElementById('extractedTextSection');
+        const extractedTextPreview = document.getElementById('extractedTextPreview');
         const statsSection = document.getElementById('statsSection');
         const editorContent = document.getElementById('editorContent');
         const viewTabs = document.getElementById('viewTabs');
@@ -667,6 +710,7 @@
             state.fileType = ext === 'pdf' ? 'pdf' : (ext === 'html' || ext === 'htm' ? 'html' : 'image');
             state.replacementCount = 0;
             state.ocrData = [];
+            state.extractedFullText = '';
             state.ocrEnabled = false;
 
             fileInfo.classList.add('active');
@@ -674,6 +718,7 @@
             fileSize.textContent = formatFileSize(file.size);
             fileType.textContent = state.fileType.toUpperCase();
             statsSection.style.display = 'block';
+            extractedTextSection.style.display = 'none';
 
             if (state.fileType === 'html') {
                 const text = await file.text();
@@ -697,7 +742,7 @@
                     downloadBtn.style.display = 'flex';
                     ocrSection.style.display = 'block';
                     findReplaceSection.style.display = 'block';
-                    showAlert('PDF loaded - OCR available!', 'success');
+                    showAlert('PDF loaded successfully!', 'success');
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -790,13 +835,13 @@
 
                 // Info banner
                 const banner = document.createElement('div');
-                banner.className = hasFormFields ? 'pdf-info-banner' : 'pdf-info-banner warning';
+                banner.className = hasFormFields ? 'pdf-info-banner success' : 'pdf-info-banner warning';
                 if (hasFormFields) {
                     banner.innerHTML = `
-                        <h3>✅ ${state.pdfFormFields.length} Editable Form Fields</h3>
+                        <h3>✅ ${state.pdfFormFields.length} Editable Form Fields Found</h3>
                         <p><strong>Use Find & Replace</strong> to edit form fields directly!</p>
                         <p style="font-size: 0.875rem; margin-top: 0.5rem; color: var(--text-secondary);">
-                            💡 Text will be permanently saved in the PDF
+                            💡 You can also run OCR to extract additional text from images
                         </p>
                     `;
                 } else {
@@ -804,7 +849,7 @@
                         <h3>⚠️ No Editable Form Fields Found</h3>
                         <p><strong>Click "Extract Text (OCR)"</strong> to make this PDF editable!</p>
                         <p style="font-size: 0.875rem; margin-top: 0.5rem; color: var(--text-secondary);">
-                            💡 OCR will extract all text from images and make it searchable & replaceable
+                            💡 OCR will extract all text from images and make it searchable
                         </p>
                     `;
                 }
@@ -867,12 +912,32 @@
 
                 state.ocrEnabled = true;
                 findReplaceSection.style.display = 'block';
-                showAlert(`OCR Complete! Extracted ${state.ocrData.length} text items`, 'success');
+                extractedTextSection.style.display = 'block';
+                
+                // Show extracted text preview
+                extractedTextPreview.textContent = state.extractedFullText.substring(0, 500) + 
+                    (state.extractedFullText.length > 500 ? '...\n\n(Showing first 500 characters)' : '');
+                
+                showAlert(`✅ OCR Complete! Found ${state.ocrData.length} text items`, 'success');
+                
+                // Update banner
+                const banner = document.querySelector('.pdf-info-banner');
+                if (banner) {
+                    banner.className = 'pdf-info-banner success';
+                    banner.innerHTML = `
+                        <h3>✅ Text Extraction Complete!</h3>
+                        <p><strong>${state.ocrData.length} text items</strong> extracted and ready to edit.</p>
+                        <p style="font-size: 0.875rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                            💡 Use Find & Replace below to modify the extracted text
+                        </p>
+                    `;
+                }
             } catch (error) {
+                console.error('OCR Error:', error);
                 showAlert('OCR Error: ' + error.message, 'error');
             } finally {
                 extractTextBtn.disabled = false;
-                extractTextBtn.innerHTML = '🔍 Extract Text (OCR)';
+                extractTextBtn.innerHTML = '✅ Text Extracted';
                 document.getElementById('ocrProgress').style.display = 'none';
             }
         });
@@ -894,9 +959,12 @@
 
             const overlay = document.getElementById('ocrOverlay');
             const img = document.getElementById('imageCanvas');
-            const imgRect = img.getBoundingClientRect();
+            
+            state.extractedFullText = result.data.text;
 
             result.data.words.forEach((word, index) => {
+                if (!word.text.trim()) return;
+                
                 const box = word.bbox;
                 const textBox = document.createElement('div');
                 textBox.className = 'ocr-text-box';
@@ -910,11 +978,12 @@
                 textBox.style.top = (box.y0 * scaleY) + 'px';
                 textBox.style.width = ((box.x1 - box.x0) * scaleX) + 'px';
                 textBox.style.height = ((box.y1 - box.y0) * scaleY) + 'px';
-                textBox.style.fontSize = ((box.y1 - box.y0) * scaleY * 0.8) + 'px';
+                textBox.style.fontSize = ((box.y1 - box.y0) * scaleY * 0.7) + 'px';
 
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.value = word.text;
+                input.title = word.text;
                 textBox.appendChild(input);
 
                 overlay.appendChild(textBox);
@@ -931,6 +1000,7 @@
 
         async function performOCROnPDF() {
             const totalPages = state.pdfDoc.numPages;
+            let allText = '';
             
             for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                 document.getElementById('ocrProgressText').textContent = `Page ${pageNum}/${totalPages}`;
@@ -952,11 +1022,15 @@
                 const imageData = canvas.toDataURL();
                 const result = await Tesseract.recognize(imageData, 'eng');
 
+                allText += result.data.text + '\n\n';
+
                 const overlay = document.getElementById(`ocr-overlay-${pageNum}`);
                 const container = overlay.parentElement;
                 const displayCanvas = container.querySelector('.pdf-page-canvas');
 
                 result.data.words.forEach((word, index) => {
+                    if (!word.text.trim()) return;
+                    
                     const box = word.bbox;
                     const textBox = document.createElement('div');
                     textBox.className = 'ocr-text-box';
@@ -970,11 +1044,12 @@
                     textBox.style.top = (box.y0 * scale) + 'px';
                     textBox.style.width = ((box.x1 - box.x0) * scale) + 'px';
                     textBox.style.height = ((box.y1 - box.y0) * scale) + 'px';
-                    textBox.style.fontSize = ((box.y1 - box.y0) * scale * 0.7) + 'px';
+                    textBox.style.fontSize = ((box.y1 - box.y0) * scale * 0.6) + 'px';
 
                     const input = document.createElement('input');
                     input.type = 'text';
                     input.value = word.text;
+                    input.title = word.text;
                     textBox.appendChild(input);
 
                     overlay.appendChild(textBox);
@@ -988,6 +1063,7 @@
                 });
             }
 
+            state.extractedFullText = allText;
             ocrItemCount.textContent = state.ocrData.length;
         }
 
@@ -1022,11 +1098,8 @@
 
         async function replaceInHTML(findText, replaceText) {
             const caseSensitive = document.getElementById('caseSensitive').checked;
-            const wholeWord = document.getElementById('wholeWord').checked;
-
             let flags = caseSensitive ? 'g' : 'gi';
-            let pattern = wholeWord ? `\\b${escapeRegex(findText)}\\b` : escapeRegex(findText);
-            let regex = new RegExp(pattern, flags);
+            let regex = new RegExp(escapeRegex(findText), flags);
 
             const matches = state.currentContent.match(regex);
             const count = matches ? matches.length : 0;
@@ -1040,7 +1113,8 @@
             state.replacementCount += count;
             renderHTML();
             replacementCount.textContent = state.replacementCount;
-            showAlert(`Successfully replaced ${count} occurrence(s)`, 'success');
+            statusStat.textContent = 'Modified';
+            showAlert(`✅ Replaced ${count} occurrence(s)`, 'success');
         }
 
         async function replaceInPDF(findText, replaceText) {
@@ -1089,17 +1163,23 @@
                 }
             }
 
-            // Also check OCR data
+            // Check OCR data
             if (state.ocrData.length > 0) {
-                totalCount += await replaceInOCR(findText, replaceText, true);
+                const ocrCount = await replaceInOCR(findText, replaceText, true);
+                totalCount += ocrCount;
             }
 
             if (totalCount > 0) {
                 state.replacementCount += totalCount;
                 replacementCount.textContent = state.replacementCount;
-                showAlert(`Successfully replaced ${totalCount} occurrence(s)`, 'success');
+                statusStat.textContent = 'Modified';
+                showAlert(`✅ Replaced ${totalCount} occurrence(s)`, 'success');
             } else {
-                showAlert('No matches found - Try running OCR first!', 'warning');
+                if (!state.ocrEnabled) {
+                    showAlert('⚠️ No matches found. Try running OCR first to extract text!', 'warning');
+                } else {
+                    showAlert('No matches found in extracted text', 'info');
+                }
             }
         }
 
@@ -1118,8 +1198,16 @@
                     const matches = text.match(regex);
                     count += matches ? matches.length : 0;
                     item.input.value = newText;
+                    item.text = newText;
                 }
             });
+
+            // Update extracted text preview
+            if (count > 0) {
+                state.extractedFullText = state.ocrData.map(item => item.input.value).join(' ');
+                extractedTextPreview.textContent = state.extractedFullText.substring(0, 500) + 
+                    (state.extractedFullText.length > 500 ? '...\n\n(Showing first 500 characters)' : '');
+            }
 
             if (returnCount) {
                 return count;
@@ -1128,7 +1216,8 @@
             if (count > 0) {
                 state.replacementCount += count;
                 replacementCount.textContent = state.replacementCount;
-                showAlert(`Successfully replaced ${count} occurrence(s)`, 'success');
+                statusStat.textContent = 'Modified';
+                showAlert(`✅ Replaced ${count} occurrence(s)`, 'success');
             } else {
                 showAlert('No matches found', 'info');
             }
@@ -1177,7 +1266,6 @@
             document.getElementById('findText').value = '';
             document.getElementById('replaceText').value = '';
             document.getElementById('caseSensitive').checked = false;
-            document.getElementById('wholeWord').checked = false;
         });
 
         function escapeRegex(string) {
