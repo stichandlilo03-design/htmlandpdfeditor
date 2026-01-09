@@ -94,6 +94,8 @@
             height: fit-content;
             position: sticky;
             top: 25px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .control-group {
@@ -439,6 +441,7 @@
             background: #f8fafc;
             border-radius: 8px;
             border: 1px solid #e2e8f0;
+            flex-wrap: wrap;
         }
 
         .toolbar button {
@@ -487,6 +490,151 @@
             cursor: pointer;
         }
 
+        /* Bulk Find & Replace Styles */
+        .bulk-replace-section {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border: 2px solid #10b981;
+        }
+
+        .bulk-replace-section h3 {
+            color: #065f46;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+        }
+
+        .replace-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 40px;
+            gap: 10px;
+            margin-bottom: 12px;
+            align-items: center;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #d1fae5;
+            transition: all 0.2s ease;
+        }
+
+        .replace-row:hover {
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+        }
+
+        .replace-row input {
+            padding: 10px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .replace-row input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .replace-row input::placeholder {
+            color: #9ca3af;
+        }
+
+        .remove-row-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            padding: 0;
+        }
+
+        .remove-row-btn:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+        .remove-row-btn i {
+            font-size: 16px;
+        }
+
+        .bulk-replace-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .add-row-btn {
+            background: #10b981;
+            grid-column: span 2;
+        }
+
+        .add-row-btn:hover {
+            background: #059669;
+        }
+
+        .replace-options {
+            margin-top: 15px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #d1fae5;
+        }
+
+        .replace-options label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .replace-options input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .bulk-results {
+            margin-top: 15px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #d1fae5;
+            display: none;
+        }
+
+        .bulk-results.show {
+            display: block;
+        }
+
+        .bulk-results h4 {
+            color: #065f46;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .result-item {
+            padding: 8px;
+            margin-bottom: 6px;
+            background: #f0fdf4;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #166534;
+        }
+
         @media (max-width: 1200px) {
             .editor-grid {
                 grid-template-columns: 1fr;
@@ -494,6 +642,7 @@
             
             .controls {
                 position: static;
+                max-height: none;
             }
         }
 
@@ -515,6 +664,46 @@
                 left: 15px;
                 right: 15px;
             }
+
+            .replace-row {
+                grid-template-columns: 1fr;
+            }
+
+            .remove-row-btn {
+                width: 100%;
+            }
+        }
+
+        .pdf-text-overlay {
+            position: absolute;
+            border: 2px solid transparent;
+            cursor: text;
+            user-select: text;
+        }
+
+        .pdf-text-overlay:hover {
+            border-color: rgba(37, 99, 235, 0.3);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .pdf-text-overlay.editing {
+            border-color: #2563eb;
+            background: white;
+            z-index: 100;
+        }
+
+        .pdf-text-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            padding: 2px;
+        }
+
+        .pdf-text-input:focus {
+            outline: none;
         }
     </style>
 </head>
@@ -522,7 +711,7 @@
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-edit"></i> ProEdit - Advanced Universal Editor</h1>
-            <p>Upload HTML or PDF • Advanced Editing • Undo/Redo • Real-time Preview</p>
+            <p>Upload HTML or PDF • Bulk Find & Replace • Advanced Editing • Real-time Preview</p>
         </div>
 
         <div class="upload-box" id="uploadBox">
@@ -566,6 +755,51 @@
                 </div>
                 <div class="history-info" id="historyInfo">No actions performed yet</div>
 
+                <!-- Bulk Find & Replace Section -->
+                <div id="bulkReplaceSection" class="bulk-replace-section hidden">
+                    <h3>
+                        <i class="fas fa-list-check"></i> Bulk Find & Replace
+                    </h3>
+                    
+                    <div id="replaceRows">
+                        <!-- Replace rows will be added here -->
+                    </div>
+
+                    <button class="add-row-btn" id="addRowBtn">
+                        <i class="fas fa-plus"></i> Add New Row
+                    </button>
+
+                    <div class="replace-options">
+                        <label>
+                            <input type="checkbox" id="caseSensitive">
+                            Case Sensitive
+                        </label>
+                        <label>
+                            <input type="checkbox" id="wholeWord">
+                            Match Whole Word Only
+                        </label>
+                        <label>
+                            <input type="checkbox" id="useRegex">
+                            Use Regular Expression
+                        </label>
+                    </div>
+
+                    <div class="bulk-replace-controls">
+                        <button id="bulkReplaceBtn" class="success">
+                            <i class="fas fa-sync-alt"></i> Replace All
+                        </button>
+                        <button id="clearBulkBtn" class="secondary">
+                            <i class="fas fa-eraser"></i> Clear All
+                        </button>
+                    </div>
+
+                    <div id="bulkResults" class="bulk-results">
+                        <h4><i class="fas fa-check-circle"></i> Results:</h4>
+                        <div id="resultsContent"></div>
+                    </div>
+                </div>
+
+                <!-- Single Find & Replace (Legacy) -->
                 <div class="control-group">
                     <label><i class="fas fa-search"></i> 🔍 Find Text</label>
                     <input type="text" id="findInput" placeholder="Search for text...">
@@ -680,13 +914,16 @@
             pdfPages: [],
             pdfAnnotations: [],
             selection: null,
-            pdfMode: 'full' // 'text' or 'full'
+            pdfMode: 'full',
+            bulkReplaceRows: [],
+            pdfTextLayers: [] // Store text content for editing
         };
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             setupEventListeners();
             setupKeyboardShortcuts();
+            initializeBulkReplace();
         });
 
         function setupEventListeners() {
@@ -740,6 +977,11 @@
             document.getElementById('addImageBtn').addEventListener('click', addImageToPdf);
             document.getElementById('reprocessPdfBtn').addEventListener('click', reprocessPdf);
 
+            // Bulk Replace controls
+            document.getElementById('addRowBtn').addEventListener('click', addBulkReplaceRow);
+            document.getElementById('bulkReplaceBtn').addEventListener('click', executeBulkReplace);
+            document.getElementById('clearBulkBtn').addEventListener('click', clearBulkReplace);
+
             // PDF mode selection
             document.querySelectorAll('input[name="pdfMode"]').forEach(radio => {
                 radio.addEventListener('change', (e) => {
@@ -776,6 +1018,192 @@
                     }
                 }
             });
+        }
+
+        // Bulk Replace Functions
+        function initializeBulkReplace() {
+            // Add 3 default rows
+            for (let i = 0; i < 3; i++) {
+                addBulkReplaceRow();
+            }
+        }
+
+        function addBulkReplaceRow() {
+            const rowId = Date.now() + Math.random();
+            const row = {
+                id: rowId,
+                find: '',
+                replace: ''
+            };
+            
+            state.bulkReplaceRows.push(row);
+            renderBulkReplaceRows();
+        }
+
+        function renderBulkReplaceRows() {
+            const container = document.getElementById('replaceRows');
+            container.innerHTML = '';
+            
+            state.bulkReplaceRows.forEach((row, index) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'replace-row';
+                rowDiv.innerHTML = `
+                    <input type="text" 
+                           placeholder="Find text..." 
+                           data-id="${row.id}" 
+                           data-field="find"
+                           value="${row.find}">
+                    <input type="text" 
+                           placeholder="Replace with..." 
+                           data-id="${row.id}" 
+                           data-field="replace"
+                           value="${row.replace}">
+                    <button class="remove-row-btn" data-id="${row.id}" title="Remove row">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                // Add event listeners
+                const inputs = rowDiv.querySelectorAll('input');
+                inputs.forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const rowToUpdate = state.bulkReplaceRows.find(r => r.id == e.target.dataset.id);
+                        if (rowToUpdate) {
+                            rowToUpdate[e.target.dataset.field] = e.target.value;
+                        }
+                    });
+                });
+                
+                const removeBtn = rowDiv.querySelector('.remove-row-btn');
+                removeBtn.addEventListener('click', () => removeBulkReplaceRow(row.id));
+                
+                container.appendChild(rowDiv);
+            });
+        }
+
+        function removeBulkReplaceRow(rowId) {
+            if (state.bulkReplaceRows.length <= 1) {
+                showAlert('At least one row is required', 'warning');
+                return;
+            }
+            
+            state.bulkReplaceRows = state.bulkReplaceRows.filter(row => row.id !== rowId);
+            renderBulkReplaceRows();
+        }
+
+        function executeBulkReplace() {
+            const editor = document.getElementById('editor');
+            if (!editor) {
+                showAlert('Please open the editor first', 'error');
+                return;
+            }
+
+            const caseSensitive = document.getElementById('caseSensitive').checked;
+            const wholeWord = document.getElementById('wholeWord').checked;
+            const useRegex = document.getElementById('useRegex').checked;
+
+            let text = state.currentContent;
+            let totalReplacements = 0;
+            const results = [];
+
+            // Filter out empty rows
+            const validRows = state.bulkReplaceRows.filter(row => row.find.trim() !== '');
+
+            if (validRows.length === 0) {
+                showAlert('Please enter at least one find/replace pair', 'warning');
+                return;
+            }
+
+            // Process each row
+            validRows.forEach((row, index) => {
+                let findPattern = row.find;
+                let replaceWith = row.replace;
+                let count = 0;
+
+                try {
+                    let regex;
+                    
+                    if (useRegex) {
+                        // Use as-is if regex mode
+                        regex = new RegExp(findPattern, caseSensitive ? 'g' : 'gi');
+                    } else {
+                        // Escape special characters
+                        findPattern = findPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        
+                        if (wholeWord) {
+                            findPattern = `\\b${findPattern}\\b`;
+                        }
+                        
+                        regex = new RegExp(findPattern, caseSensitive ? 'g' : 'gi');
+                    }
+
+                    // Count matches before replacement
+                    const matches = text.match(regex);
+                    count = matches ? matches.length : 0;
+
+                    if (count > 0) {
+                        text = text.replace(regex, replaceWith);
+                        totalReplacements += count;
+                        results.push({
+                            find: row.find,
+                            replace: row.replace,
+                            count: count
+                        });
+                    }
+                } catch (error) {
+                    showAlert(`Error in row ${index + 1}: ${error.message}`, 'error');
+                    return;
+                }
+            });
+
+            if (totalReplacements > 0) {
+                state.currentContent = text;
+                editor.value = text;
+                state.replaceCount += totalReplacements;
+                document.getElementById('replaceCount').textContent = state.replaceCount;
+                
+                addToHistory(`Bulk replaced ${totalReplacements} occurrence(s)`);
+                
+                // Show results
+                displayBulkResults(results, totalReplacements);
+                showAlert(`Successfully replaced ${totalReplacements} occurrence(s)!`, 'success');
+            } else {
+                showAlert('No matches found for any search terms', 'info');
+            }
+        }
+
+        function displayBulkResults(results, total) {
+            const resultsDiv = document.getElementById('bulkResults');
+            const contentDiv = document.getElementById('resultsContent');
+            
+            contentDiv.innerHTML = results.map(r => `
+                <div class="result-item">
+                    <strong>"${r.find}"</strong> → "${r.replace}": ${r.count} replacement${r.count > 1 ? 's' : ''}
+                </div>
+            `).join('');
+            
+            contentDiv.innerHTML += `
+                <div class="result-item" style="background: #dcfce7; font-weight: 600;">
+                    <i class="fas fa-check-circle"></i> Total: ${total} replacement${total > 1 ? 's' : ''}
+                </div>
+            `;
+            
+            resultsDiv.classList.add('show');
+            
+            // Hide after 10 seconds
+            setTimeout(() => {
+                resultsDiv.classList.remove('show');
+            }, 10000);
+        }
+
+        function clearBulkReplace() {
+            state.bulkReplaceRows = [];
+            initializeBulkReplace();
+            document.getElementById('caseSensitive').checked = false;
+            document.getElementById('wholeWord').checked = false;
+            document.getElementById('useRegex').checked = false;
+            document.getElementById('bulkResults').classList.remove('show');
+            showAlert('Bulk replace cleared', 'info');
         }
 
         async function handleFileUpload(file) {
@@ -823,6 +1251,7 @@
             document.getElementById('fileSize').textContent = formatSize(file.size);
             document.getElementById('copyBtn').style.display = 'block';
             document.getElementById('pdfEditOptions').classList.add('hidden');
+            document.getElementById('bulkReplaceSection').classList.remove('hidden');
             
             resetHistory();
             addToHistory('File loaded');
@@ -836,10 +1265,7 @@
             state.fileName = file.name;
             
             try {
-                // Read file as ArrayBuffer first
                 const arrayBuffer = await file.arrayBuffer();
-                
-                // Check if it's a valid PDF by checking the header
                 const header = new Uint8Array(arrayBuffer.slice(0, 5));
                 const headerStr = String.fromCharCode.apply(null, header);
                 
@@ -849,24 +1275,23 @@
                 
                 state.pdfData = new Uint8Array(arrayBuffer);
                 
-                // Try to load with pdf-lib first (more tolerant)
+                // Load with pdf-lib for editing
                 try {
                     state.pdfLibDoc = await PDFLib.PDFDocument.load(state.pdfData, {
                         ignoreEncryption: true,
                         updateMetadata: false
                     });
-                    state.pdfPages = await state.pdfLibDoc.getPages();
+                    state.pdfPages = state.pdfLibDoc.getPages();
                 } catch (pdfLibError) {
                     console.warn('PDF-Lib loading failed:', pdfLibError);
                     state.pdfLibDoc = null;
                 }
                 
-                // Extract text using pdf.js or fallback
+                // Extract text and load for viewing
                 let text = '';
                 let numPages = 0;
                 
                 try {
-                    // Try to use pdf.js for rendering
                     const loadingTask = pdfjsLib.getDocument({ 
                         data: state.pdfData,
                         disableAutoFetch: true,
@@ -877,11 +1302,19 @@
                     state.pdfDoc = await loadingTask.promise;
                     numPages = state.pdfDoc.numPages;
                     
-                    // Extract text from each page
+                    // Extract text from all pages
                     for (let i = 1; i <= numPages; i++) {
                         try {
                             const page = await state.pdfDoc.getPage(i);
                             const content = await page.getTextContent();
+                            
+                            // Store text content with position info
+                            state.pdfTextLayers.push({
+                                pageNum: i,
+                                items: content.items
+                            });
+                            
+                            text += `--- Page ${i} ---\n`;
                             text += content.items.map(item => item.str).join(' ') + '\n\n';
                         } catch (pageError) {
                             console.warn(`Error extracting text from page ${i}:`, pageError);
@@ -889,13 +1322,10 @@
                         }
                     }
                 } catch (pdfjsError) {
-                    console.warn('PDF.js loading failed, using fallback text extraction:', pdfjsError);
-                    
-                    // Fallback: Try to extract text from binary data
+                    console.warn('PDF.js loading failed, using fallback:', pdfjsError);
                     text = extractTextFromBinary(state.pdfData);
-                    numPages = 1; // Assume 1 page for fallback
-                    
-                    showAlert('PDF loaded in text-only mode (preview not available)', 'warning');
+                    numPages = 1;
+                    showAlert('PDF loaded in text-only mode', 'warning');
                 }
                 
                 state.originalContent = text;
@@ -906,8 +1336,8 @@
                 document.getElementById('fileSize').textContent = formatSize(file.size);
                 document.getElementById('copyBtn').style.display = 'none';
                 document.getElementById('pdfEditOptions').classList.remove('hidden');
+                document.getElementById('bulkReplaceSection').classList.remove('hidden');
                 
-                // Set PDF mode based on what worked
                 const pdfModeRadio = document.querySelector(`input[name="pdfMode"][value="${state.pdfDoc ? 'full' : 'text'}"]`);
                 if (pdfModeRadio) {
                     pdfModeRadio.checked = true;
@@ -931,17 +1361,14 @@
         }
 
         function extractTextFromBinary(data) {
-            // Simple text extraction from binary PDF data
             let text = '';
             const decoder = new TextDecoder('utf-8', { fatal: false });
             
-            // Convert chunks to text
             const chunkSize = 4096;
             for (let i = 0; i < data.length; i += chunkSize) {
                 const chunk = data.slice(i, i + chunkSize);
                 const chunkText = decoder.decode(chunk);
                 
-                // Extract text between parentheses (common in PDFs)
                 const matches = chunkText.match(/\(([^)]+)\)/g);
                 if (matches) {
                     matches.forEach(match => {
@@ -949,7 +1376,6 @@
                     });
                 }
                 
-                // Also look for plain text words
                 const words = chunkText.match(/[a-zA-Z0-9.,!?;:'"\s]{4,}/g);
                 if (words) {
                     text += words.join(' ') + ' ';
@@ -968,21 +1394,18 @@
             showProgress(50);
             try {
                 if (state.pdfMode === 'full') {
-                    // Try to reload with pdf.js
                     const loadingTask = pdfjsLib.getDocument({ 
                         data: state.pdfData,
                         disableAutoFetch: true,
                         disableStream: true
                     });
                     state.pdfDoc = await loadingTask.promise;
-                    showAlert(`PDF reloaded successfully! ${state.pdfDoc.numPages} pages`, 'success');
+                    showAlert(`PDF reloaded! ${state.pdfDoc.numPages} pages`, 'success');
                 } else {
-                    // Text-only mode
                     state.pdfDoc = null;
                     showAlert('Switched to text-only mode', 'info');
                 }
                 
-                // Refresh the view
                 if (document.querySelector('.tab.active[data-tab="preview"]')) {
                     await showPDFPreview();
                 }
@@ -1096,17 +1519,17 @@
                     <div style="width:1px; background:#e5e7eb; margin:0 10px;"></div>
                     <button onclick="insertTag('<h1>', '</h1>')"><i class="fas fa-heading"></i> H1</button>
                     <button onclick="insertTag('<p>', '</p>')"><i class="fas fa-paragraph"></i> P</button>
-                    <button onclick="insertTag('<a href=\"\">', '</a>')"><i class="fas fa-link"></i> Link</button>
-                    <button onclick="insertTag('<img src=\"\" alt=\"\">', '')"><i class="fas fa-image"></i> Image</button>
+                    <button onclick="insertTag('<a href=\\\"\\\">', '</a>')"><i class="fas fa-link"></i> Link</button>
+                    <button onclick="insertTag('<img src=\\\"\\\" alt=\\\"\\\">', '')"><i class="fas fa-image"></i> Image</button>
                 `;
             } else {
                 if (state.pdfDoc) {
                     toolbar.innerHTML = `
-                        <button onclick="highlightText()" title="Highlight selected text"><i class="fas fa-highlighter"></i></button>
-                        <button onclick="addComment()" title="Add comment"><i class="fas fa-comment"></i></button>
-                        <button onclick="drawRectangle()" title="Draw rectangle"><i class="fas fa-square"></i></button>
-                        <button onclick="drawCircle()" title="Draw circle"><i class="fas fa-circle"></i></button>
-                        <button onclick="addStamp()" title="Add stamp"><i class="fas fa-stamp"></i></button>
+                        <button onclick="highlightText()" title="Highlight selected text"><i class="fas fa-highlighter"></i> Highlight</button>
+                        <button onclick="addComment()" title="Add comment"><i class="fas fa-comment"></i> Comment</button>
+                        <button onclick="drawRectangle()" title="Draw rectangle"><i class="fas fa-square"></i> Rectangle</button>
+                        <button onclick="drawCircle()" title="Draw circle"><i class="fas fa-circle"></i> Circle</button>
+                        <button onclick="addStamp()" title="Add stamp"><i class="fas fa-stamp"></i> Stamp</button>
                     `;
                 } else {
                     toolbar.innerHTML = `
@@ -1208,11 +1631,12 @@
             try {
                 for (let i = 1; i <= state.pdfDoc.numPages; i++) {
                     const page = await state.pdfDoc.getPage(i);
-                    const viewport = page.getViewport({scale: 1.2});
+                    const viewport = page.getViewport({scale: 1.5});
                     
                     const pageDiv = document.createElement('div');
                     pageDiv.className = 'pdf-page';
                     pageDiv.dataset.page = i;
+                    pageDiv.style.position = 'relative';
                     
                     const pageNumber = document.createElement('div');
                     pageNumber.className = 'page-number';
@@ -1232,6 +1656,8 @@
                     pageDiv.appendChild(canvas);
                     container.appendChild(pageDiv);
                 }
+                
+                showAlert('PDF rendered successfully', 'success');
             } catch (error) {
                 console.error('Error rendering PDF:', error);
                 container.innerHTML = `
@@ -1239,6 +1665,9 @@
                         <i class="fas fa-exclamation-circle" style="font-size: 48px; margin-bottom: 20px;"></i>
                         <h3>Error rendering PDF preview</h3>
                         <p>${error.message}</p>
+                        <button onclick="reprocessPdf()" class="warning" style="margin-top: 20px;">
+                            <i class="fas fa-redo"></i> Try Again
+                        </button>
                     </div>
                 `;
             }
@@ -1253,7 +1682,7 @@
             showPDFPreview().then(() => {
                 const pages = document.querySelectorAll('.pdf-page');
                 pages.forEach(page => {
-                    page.style.position = 'relative';
+                    page.style.cursor = 'crosshair';
                     page.addEventListener('click', (e) => {
                         const rect = page.getBoundingClientRect();
                         const x = e.clientX - rect.left;
@@ -1262,6 +1691,7 @@
                         addAnnotation(page, x, y);
                     });
                 });
+                showAlert('Click on PDF to add annotations', 'info');
             });
         }
 
@@ -1284,7 +1714,6 @@
             annotation.appendChild(textarea);
             pageElement.appendChild(annotation);
             
-            // Make draggable
             makeDraggable(annotation);
             
             state.pdfAnnotations.push({
@@ -1295,6 +1724,7 @@
             });
             
             addToHistory('Annotation added');
+            textarea.focus();
         }
 
         function makeDraggable(element) {
@@ -1302,6 +1732,8 @@
             let offsetX, offsetY;
             
             element.addEventListener('mousedown', (e) => {
+                if (e.target.tagName === 'TEXTAREA') return;
+                
                 isDragging = true;
                 offsetX = e.clientX - element.getBoundingClientRect().left;
                 offsetY = e.clientY - element.getBoundingClientRect().top;
@@ -1330,7 +1762,6 @@
                 document.removeEventListener('mousemove', mouseMove);
                 document.removeEventListener('mouseup', mouseUp);
                 
-                // Update annotation position
                 const annotation = state.pdfAnnotations.find(a => a.element === element);
                 if (annotation) {
                     annotation.x = parseInt(element.style.left);
@@ -1352,7 +1783,6 @@
         }
 
         function addToHistory(action) {
-            // Remove future history if we're not at the end
             if (state.historyIndex < state.history.length - 1) {
                 state.history = state.history.slice(0, state.historyIndex + 1);
             }
@@ -1360,8 +1790,7 @@
             state.history.push({
                 content: state.currentContent,
                 action: action,
-                timestamp: new Date().toLocaleTimeString(),
-                pdfData: state.fileType === 'pdf' ? state.pdfLibDoc ? state.pdfLibDoc.save() : null : null
+                timestamp: new Date().toLocaleTimeString()
             });
             
             state.historyIndex = state.history.length - 1;
@@ -1377,7 +1806,6 @@
                 const historyItem = state.history[state.historyIndex];
                 state.currentContent = historyItem.content;
                 
-                // Update editor if visible
                 const editor = document.getElementById('editor');
                 if (editor) {
                     editor.value = state.currentContent;
@@ -1397,7 +1825,6 @@
                 const historyItem = state.history[state.historyIndex];
                 state.currentContent = historyItem.content;
                 
-                // Update editor if visible
                 const editor = document.getElementById('editor');
                 if (editor) {
                     editor.value = state.currentContent;
@@ -1440,7 +1867,6 @@
             const matches = text.match(regex);
             
             if (matches) {
-                // Highlight matches
                 editor.focus();
                 const firstIndex = text.toLowerCase().indexOf(find.toLowerCase());
                 if (firstIndex !== -1) {
@@ -1496,7 +1922,6 @@
                 return;
             }
             
-            const oldContent = state.currentContent;
             state.currentContent = newText;
             editor.value = newText;
             
@@ -1523,28 +1948,92 @@
             const text = prompt('Enter text to add to PDF:', 'Sample Text');
             if (!text) return;
             
+            const pageNum = prompt('Enter page number (1-' + state.pdfPages.length + '):', '1');
+            const pageIndex = parseInt(pageNum) - 1;
+            
+            if (pageIndex < 0 || pageIndex >= state.pdfPages.length) {
+                showAlert('Invalid page number', 'error');
+                return;
+            }
+            
             try {
-                const pageIndex = 0; // Add to first page
                 const page = state.pdfPages[pageIndex];
                 const { width, height } = page.getSize();
                 
+                const fontSize = parseInt(prompt('Enter font size:', '12')) || 12;
+                const x = parseInt(prompt('Enter X position (0-' + Math.floor(width) + '):', '50')) || 50;
+                const y = parseInt(prompt('Enter Y position from bottom (0-' + Math.floor(height) + '):', '100')) || 100;
+                
                 page.drawText(text, {
-                    x: 50,
-                    y: height - 100,
-                    size: 20,
+                    x: x,
+                    y: height - y,
+                    size: fontSize,
                     color: PDFLib.rgb(0, 0, 0),
                 });
                 
                 state.isPdfModified = true;
-                addToHistory('Text added to PDF');
-                showAlert('Text added to PDF (will be saved when you download)', 'success');
+                addToHistory(`Text added to page ${pageNum}`);
+                showAlert('Text added to PDF! Click "Save PDF Edits" to download', 'success');
             } catch (error) {
                 showAlert(`Error adding text: ${error.message}`, 'error');
             }
         }
 
         async function addImageToPdf() {
-            showAlert('Image upload coming soon!', 'info');
+            if (!state.pdfLibDoc) {
+                showAlert('PDF editing not available for this file', 'error');
+                return;
+            }
+            
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/png,image/jpeg,image/jpg';
+            
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pageNum = prompt('Enter page number (1-' + state.pdfPages.length + '):', '1');
+                    const pageIndex = parseInt(pageNum) - 1;
+                    
+                    if (pageIndex < 0 || pageIndex >= state.pdfPages.length) {
+                        showAlert('Invalid page number', 'error');
+                        return;
+                    }
+                    
+                    const page = state.pdfPages[pageIndex];
+                    const { width, height } = page.getSize();
+                    
+                    let image;
+                    if (file.type === 'image/png') {
+                        image = await state.pdfLibDoc.embedPng(arrayBuffer);
+                    } else {
+                        image = await state.pdfLibDoc.embedJpg(arrayBuffer);
+                    }
+                    
+                    const imgWidth = parseInt(prompt('Enter image width:', '200')) || 200;
+                    const imgHeight = parseInt(prompt('Enter image height:', '150')) || 150;
+                    const x = parseInt(prompt('Enter X position:', '50')) || 50;
+                    const y = parseInt(prompt('Enter Y position from bottom:', '100')) || 100;
+                    
+                    page.drawImage(image, {
+                        x: x,
+                        y: height - y - imgHeight,
+                        width: imgWidth,
+                        height: imgHeight,
+                    });
+                    
+                    state.isPdfModified = true;
+                    addToHistory(`Image added to page ${pageNum}`);
+                    showAlert('Image added to PDF! Click "Save PDF Edits" to download', 'success');
+                } catch (error) {
+                    showAlert(`Error adding image: ${error.message}`, 'error');
+                }
+            };
+            
+            input.click();
         }
 
         async function savePdfEdits() {
@@ -1553,27 +2042,43 @@
                 return;
             }
             
+            showProgress(30);
+            
             try {
                 let pdfBytes;
                 
-                if (state.pdfLibDoc) {
+                if (state.pdfLibDoc && state.isPdfModified) {
                     // Save actual PDF edits
                     pdfBytes = await state.pdfLibDoc.save();
+                    showProgress(70);
                 } else {
-                    // Create a new PDF with the edited text
+                    // Create new PDF with edited text
                     const newPdfDoc = await PDFLib.PDFDocument.create();
-                    const page = newPdfDoc.addPage([600, 800]);
+                    const lines = state.currentContent.split('\n');
+                    let currentPage = newPdfDoc.addPage([600, 800]);
+                    let yPosition = 750;
                     
-                    // Add the edited text
-                    page.drawText(state.currentContent, {
-                        x: 50,
-                        y: 750,
-                        size: 12,
-                        maxWidth: 500,
-                        lineHeight: 18,
-                    });
+                    for (const line of lines) {
+                        if (yPosition < 50) {
+                            currentPage = newPdfDoc.addPage([600, 800]);
+                            yPosition = 750;
+                        }
+                        
+                        if (line.trim()) {
+                            currentPage.drawText(line, {
+                                x: 50,
+                                y: yPosition,
+                                size: 12,
+                                maxWidth: 500,
+                            });
+                            yPosition -= 20;
+                        } else {
+                            yPosition -= 10;
+                        }
+                    }
                     
                     pdfBytes = await newPdfDoc.save();
+                    showProgress(70);
                 }
                 
                 const blob = new Blob([pdfBytes], {type: 'application/pdf'});
@@ -1581,9 +2086,17 @@
                 
                 addToHistory('PDF saved with edits');
                 state.isPdfModified = false;
+                
+                showProgress(100);
+                setTimeout(() => {
+                    document.getElementById('uploadProgress').style.width = '0%';
+                }, 500);
+                
                 showAlert('PDF saved successfully!', 'success');
             } catch (error) {
+                console.error('Save error:', error);
                 showAlert(`Error saving PDF: ${error.message}`, 'error');
+                showProgress(0);
             }
         }
 
@@ -1595,17 +2108,14 @@
                 showAlert('HTML downloaded!', 'success');
             } else if (state.fileType === 'pdf') {
                 if (state.isPdfModified || state.pdfAnnotations.length > 0) {
-                    // Offer to save PDF edits
                     if (confirm('You have unsaved PDF edits. Save them before downloading?')) {
                         savePdfEdits();
                     } else {
-                        // Download extracted text
                         const blob = new Blob([state.currentContent], {type: 'text/plain'});
                         download(blob, state.fileName.replace('.pdf', '_extracted.txt'));
                         showAlert('Text file downloaded!', 'info');
                     }
                 } else {
-                    // Download extracted text
                     const blob = new Blob([state.currentContent], {type: 'text/plain'});
                     download(blob, state.fileName.replace('.pdf', '_extracted.txt'));
                     showAlert('Text file downloaded!', 'info');
@@ -1616,7 +2126,7 @@
         async function copyToClipboard() {
             try {
                 await navigator.clipboard.writeText(state.currentContent);
-                showAlert('HTML copied to clipboard!', 'success');
+                showAlert('Content copied to clipboard!', 'success');
             } catch (e) {
                 showAlert('Failed to copy', 'error');
             }
@@ -1636,6 +2146,9 @@
                 
                 document.getElementById('replaceCount').textContent = '0';
                 document.getElementById('lastAction').textContent = '-';
+                
+                // Clear bulk replace results
+                document.getElementById('bulkResults').classList.remove('show');
                 
                 resetHistory();
                 showAlert('Editor reset to original state', 'info');
@@ -1691,6 +2204,11 @@
             const end = editor.selectionEnd;
             const selectedText = editor.value.substring(start, end);
             
+            if (!selectedText) {
+                showAlert('Please select text first', 'warning');
+                return;
+            }
+            
             let formattedText;
             switch(format) {
                 case 'bold':
@@ -1713,6 +2231,10 @@
             state.currentContent = newText;
             editor.value = newText;
             addToHistory(`Formatted text as ${format}`);
+            
+            // Maintain cursor position
+            editor.focus();
+            editor.setSelectionRange(start, start + formattedText.length);
         }
 
         function insertTag(startTag, endTag) {
@@ -1730,6 +2252,11 @@
             state.currentContent = newText;
             editor.value = newText;
             addToHistory(`Inserted ${startTag} tag`);
+            
+            // Position cursor inside the tags
+            const cursorPos = start + startTag.length;
+            editor.focus();
+            editor.setSelectionRange(cursorPos, cursorPos + selectedText.length);
         }
 
         function debounce(func, wait) {
@@ -1746,7 +2273,7 @@
 
         // PDF annotation functions
         function highlightText() {
-            showAlert('Click on PDF to highlight text', 'info');
+            showAlert('Select text on PDF and click to highlight', 'info');
         }
 
         function addComment() {
@@ -1762,10 +2289,43 @@
         }
 
         function addStamp() {
-            const stamps = ['APPROVED', 'CONFIDENTIAL', 'DRAFT', 'URGENT'];
-            const stamp = stamps[Math.floor(Math.random() * stamps.length)];
-            showAlert(`Added ${stamp} stamp`, 'info');
-            addToHistory(`Added ${stamp} stamp`);
+            const stamps = ['APPROVED', 'CONFIDENTIAL', 'DRAFT', 'URGENT', 'REVIEWED', 'FINAL'];
+            const stamp = prompt('Enter stamp text or choose from: ' + stamps.join(', '), stamps[0]);
+            
+            if (!stamp) return;
+            
+            if (!state.pdfLibDoc) {
+                showAlert('PDF editing not available', 'error');
+                return;
+            }
+            
+            const pageNum = prompt('Enter page number (1-' + state.pdfPages.length + '):', '1');
+            const pageIndex = parseInt(pageNum) - 1;
+            
+            if (pageIndex < 0 || pageIndex >= state.pdfPages.length) {
+                showAlert('Invalid page number', 'error');
+                return;
+            }
+            
+            try {
+                const page = state.pdfPages[pageIndex];
+                const { width, height } = page.getSize();
+                
+                page.drawText(stamp.toUpperCase(), {
+                    x: width / 2 - 50,
+                    y: height / 2,
+                    size: 24,
+                    color: PDFLib.rgb(0.8, 0.2, 0.2),
+                    opacity: 0.5,
+                    rotate: PDFLib.degrees(-45)
+                });
+                
+                state.isPdfModified = true;
+                addToHistory(`Added ${stamp} stamp to page ${pageNum}`);
+                showAlert(`${stamp} stamp added! Click "Save PDF Edits" to download`, 'success');
+            } catch (error) {
+                showAlert(`Error adding stamp: ${error.message}`, 'error');
+            }
         }
     </script>
 </body>
